@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% block title %}Speaking Test — {{ part_label }}{% endblock %}
+
+{% block extra_css %}
+<style>
+body { overflow: hidden; }
+nav, footer { display: none; }
+
+.test-wrapper {
+  height: 100vh; display: flex; flex-direction: column; background: var(--bg);
+}
+.test-progress-bar { height: 3px; background: var(--bg4); flex-shrink:0; }
+.test-progress-fill {
+  height: 100%; background: linear-gradient(to right, var(--sky), var(--mint));
+  transition: width 0.6s ease; width: 0%;
+}
+.test-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 1.5rem; border-bottom: 1px solid var(--border);
+  background: var(--bg2); flex-shrink: 0;
+}
+.test-top-left { display:flex; align-items:center; gap:.7rem; font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; }
+.step-dots { display:flex; gap:.4rem; align-items:center; }
+.step-dot { width:9px; height:9px; border-radius:50%; background:var(--bg4); transition:all .3s; }
+.step-dot.done { background:var(--mint); }
+.step-dot.active { background:var(--sky); transform:scale(1.5); box-shadow:0 0 10px rgba(255,92,26,.7); }
+
+.test-content { flex:1; display:flex; overflow:hidden; }
+
+/* Image panel */
+.image-panel {
+  width:50%; background:var(--bg2); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:2rem; overflow:hidden;
+}
+.image-panel img { max-width:100%; max-height:65vh; border-radius:14px; object-fit:contain; box-shadow:var(--shadow); }
+.image-caption { margin-top:.7rem; font-size:.82rem; color:var(--text3); text-align:center; font-style:italic; }
+.bullet-points { margin-top:1.2rem; width:100%; max-width:380px; }
+.bullet-point {
+  display:flex; align-items:flex-start; gap:.5rem; padding:.55rem .75rem;
+  margin-bottom:.35rem; background:var(--bg4); border-radius:9px;
+  border-left:3px solid var(--sky); font-size:.87rem; color:var(--text2); line-height:1.5;
+}
+
+/* Main panel */
+.main-panel {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; padding:2rem; overflow:hidden;
+}
+
+/* Instructions phase */
+#phase-instructions { max-width:620px; width:100%; text-align:center; }
+.instructions-card {
+  background:var(--bg3); border:1px solid var(--border); border-radius:20px;
+  padding:2.2rem; margin-bottom:1.4rem;
+}
+.instructions-icon { font-size:2.4rem; margin-bottom:.8rem; animation:bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+.instructions-title { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; margin-bottom:.8rem; }
+.instructions-text { color:var(--text2); font-size:.89rem; line-height:1.75; text-align:left; background:var(--bg4); padding:1.1rem; border-radius:11px; white-space:pre-line; }
+.tts-bar {
+  display:flex; align-items:center; justify-content:center; gap:.7rem;
+  background:var(--sky-glow); border:1px solid rgba(255,92,26,.25);
+  border-radius:30px; padding:.5rem 1.1rem; font-size:.83rem; color:var(--sky-light);
+  margin-bottom:1rem;
+}
+.wave-bars { display:flex; gap:3px; align-items:center; height:16px; }
+.wbar { width:3px; background:var(--sky-light); border-radius:3px; animation:wv .8s ease-in-out infinite; }
+.wbar:nth-child(1){height:6px;animation-delay:0s}
+.wbar:nth-child(2){height:12px;animation-delay:.1s}
+.wbar:nth-child(3){height:16px;animation-delay:.2s}
+.wbar:nth-child(4){height:12px;animation-delay:.1s}
+.wbar:nth-child(5){height:6px;animation-delay:0s}
+@keyframes wv{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+
+/* Question phase */
+#phase-question { max-width:620px; width:100%; text-align:center; }
+.question-card {
+  background:var(--bg3); border:1px solid var(--border); border-radius:18px;
+  padding:1.8rem; margin-bottom:1.3rem;
+}
+.q-badge {
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:var(--sky-glow); border:1px solid rgba(255,92,26,.25);
+  color:var(--sky-light); padding:.3rem .85rem; border-radius:20px;
+  font-size:.76rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  margin-bottom:.9rem;
+}
+.question-text { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:700; line-height:1.45; }
+
+/* Timer */
+.timer-block { display:flex; flex-direction:column; align-items:center; gap:.3rem; margin-bottom:1.1rem; }
+.timer-label { font-size:.74rem; text-transform:uppercase; letter-spacing:.12em; font-weight:700; }
+.timer-label.prep   { color:var(--gold); }
+.timer-label.record { color:var(--coral); }
+.timer-num { font-family:'Syne',sans-serif; font-size:4.2rem; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+.timer-num.prep   { color:var(--gold); }
+.timer-num.record { color:var(--coral); }
+.timer-num.urgent { animation:upulse .5s ease-in-out infinite; }
+@keyframes upulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Mic */
+.mic-wrap { display:flex; flex-direction:column; align-items:center; gap:.7rem; }
+.mic-btn {
+  width:82px; height:82px; border-radius:50%; border:none; cursor:pointer;
+  background:linear-gradient(135deg,#e63946,#ff6b6b); color:#fff; font-size:2rem;
+  position:relative; box-shadow:0 0 28px rgba(230,57,70,.3); transition:all .2s;
+}
+.mic-btn.recording { animation:mrec 1s ease-in-out infinite; }
+@keyframes mrec{0%,100%{transform:scale(1);box-shadow:0 0 28px rgba(230,57,70,.35)}50%{transform:scale(1.07);box-shadow:0 0 55px rgba(230,57,70,.75)}}
+.mic-ring { position:absolute; border-radius:50%; border:2px solid rgba(230,57,70,.35); animation:ring 1.5s ease-out infinite; }
+.mic-ring:nth-child(1){inset:-16px}
+.mic-ring:nth-child(2){inset:-32px;border-color:rgba(230,57,70,.18);animation-delay:.5s}
+@keyframes ring{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.2);opacity:0}}
+
+.viz { display:flex; align-items:center; gap:3px; height:34px; }
+.vbar { width:4px; background:var(--coral); border-radius:2px; min-height:4px; transition:height .08s; }
+.rec-status { font-size:.82rem; color:var(--text3); }
+
+/* Processing phase */
+#phase-processing { text-align:center; }
+.spinner { width:64px; height:64px; border:3px solid var(--bg4); border-top-color:var(--sky); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1.1rem; }
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Recorded confirmation phase */
+#phase-recorded { text-align:center; }
+.recorded-card {
+  background:var(--bg3); border:1px solid rgba(0,212,170,.2); border-radius:18px;
+  padding:2.2rem; max-width:420px;
+}
+.recorded-icon { font-size:3rem; margin-bottom:.8rem; animation:pop .5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.recorded-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--mint); margin-bottom:.4rem; }
+.recorded-sub { color:var(--text3); font-size:.87rem; margin-bottom:1.4rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-wrapper">
+  <div class="test-progress-bar">
+    <div class="test-progress-fill" id="prog"></div>
+  </div>
+
+  <div class="test-top">
+    <div class="test-top-left">
+      <span class="badge badge-sky">{{ part_label }}</span>
+      {% if session.part == 'full' %}<span class="badge badge-mint" id="current-part-badge" style="display:none"></span>{% endif %}
+      {{ session.full_name }}
+    </div>
+    <div class="step-dots" id="step-dots"></div>
+    <div style="font-size:.82rem;color:var(--text3)" id="top-status">Instructions</div>
+  </div>
+
+  <div class="test-content" id="test-content">
+
+    <!-- Image panel injected by JS -->
+
+    <div class="main-panel" id="main-panel">
+
+      <!-- Phase: Instructions -->
+      <div id="phase-instructions">
+        <div class="instructions-card">
+          <div class="instructions-icon"><i class="fas fa-clipboard-list" style="font-size:2.4rem;color:var(--sky-light)"></i></div>
+          <div class="instructions-title">{{ part_label }} — Instructions</div>
+          <div class="tts-bar" id="tts-bar">
+            <div class="wave-bars">
+              <div class="wbar"></div><div class="wbar"></div>
+              <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+            </div>
+            Reading instructions aloud…
+          </div>
+          <div class="instructions-text" id="instr-text">{{ instructions }}</div>
+          <div style="margin-top:.9rem;font-size:.82rem;color:var(--text3);">
+            <i class="fas fa-bell text-gold"></i> First bell = start speaking &nbsp;|&nbsp;
+            <i class="fas fa-bell text-coral"></i> Second bell = time up
+          </div>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="startTest()">
+          <i class="fas fa-play"></i> I'm Ready — Begin
+        </button>
+      </div>
+
+      <!-- Phase: Question -->
+      <div id="phase-question" style="display:none">
+        <div class="question-card">
+          <div class="q-badge">
+            <i class="fas fa-microphone"></i>
+            Question <span id="q-num">1</span> of <span id="q-total">1</span>
+          </div>
+          {% if session.part == 'full' %}
+          <div id="q-part-label" style="
+            display:none;
+            font-size:.78rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.08em; color:var(--sky-light);
+            background:var(--sky-glow); border:1px solid rgba(255,92,26,.25);
+            border-radius:7px; padding:.28rem .75rem; margin-bottom:.7rem;
+            width:fit-content;
+          "></div>
+          {% endif %}
+          <div class="question-text" id="q-text">…</div>
+        </div>
+        <div class="timer-block">
+          <div class="timer-label prep" id="timer-label">PREPARE</div>
+          <div class="timer-num prep" id="timer-num">5</div>
+        </div>
+        <div class="mic-wrap" id="mic-wrap" style="display:none">
+          <div class="mic-btn" id="mic-btn" style="pointer-events:none">
+            <div class="mic-ring"></div><div class="mic-ring"></div>
+            <i class="fas fa-microphone" style="font-size:1.6rem"></i>
+          </div>
+          <div class="viz" id="viz">
+            {% for i in "1234567891011121314151617181920" %}
+            <div class="vbar"></div>{% endfor %}
+          </div>
+          <div class="rec-status" id="rec-status">Recording…</div>
+        </div>
+      </div>
+
+      <!-- Phase: Processing (uploading/scoring) -->
+      <div id="phase-processing" style="display:none">
+        <div class="spinner"></div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:.3rem">Uploading…</h3>
+        <p class="text-muted" style="font-size:.86rem" id="proc-msg">Saving your recording</p>
+      </div>
+
+      <!-- Phase: Recorded confirmation — NO feedback shown -->
+      <div id="phase-recorded" style="display:none">
+        <div class="recorded-card">
+          <div class="recorded-icon">✅</div>
+          <div class="recorded-title">Recorded!</div>
+          <div class="recorded-sub" id="rec-sub">Your answer has been saved.</div>
+          <button class="btn btn-primary btn-lg" id="btn-next" onclick="nextQuestion()">
+            Next Question <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /main-panel -->
+  </div><!-- /test-content -->
+</div>
+
+<script>
+const SESSION_ID = '{{ session.id }}';
+const CSRF       = '{{ csrf_token }}';
+const QUESTIONS  = {{ questions_json|safe }};
+const TOTAL      = QUESTIONS.length;
+
+let idx          = 0;
+let recorder     = null;
+let chunks       = [];
+let timerRef     = null;
+let recStart     = null;
+let stream       = null;
+let audioCtx     = null;
+let analyser     = null;
+let vizFrame     = null;
+
+// ── Ting sound ────────────────────────────────────────────────────────────
+function ting(freq=880) {
+  const ctx  = new (window.AudioContext||window.webkitAudioContext)();
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(freq/2, ctx.currentTime+.6);
+  gain.gain.setValueAtTime(.55, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.8);
+  osc.start(); osc.stop(ctx.currentTime+.8);
+}
+
+// ── TTS ───────────────────────────────────────────────────────────────────
+function speak(text, onEnd) {
+  if (!('speechSynthesis' in window)) { onEnd && onEnd(); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate=.88; u.pitch=1; u.volume=1;
+  u.onend = () => { onEnd && onEnd(); };
+  window.speechSynthesis.speak(u);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Build step dots
+  const dots = document.getElementById('step-dots');
+  QUESTIONS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className='step-dot'; d.id=`dot-${i}`; dots.appendChild(d);
+  });
+  document.getElementById('q-total').textContent = TOTAL;
+
+  speak(document.getElementById('instr-text').textContent);
+
+  // Pre-request mic permission
+  navigator.mediaDevices.getUserMedia({audio:true})
+    .then(s => { stream = s; })
+    .catch(e => console.warn('Mic:', e));
+});
+
+function startTest() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  loadQuestion(0);
+}
+
+// ── Image panel ───────────────────────────────────────────────────────────
+function updateImage(q) {
+  const area = document.getElementById('test-content');
+  let panel  = document.getElementById('img-panel');
+  const src  = q && (q.image_url || q.group_image_url);
+
+  if (!src) {
+    if (panel) panel.remove();
+    document.getElementById('main-panel').style.width='100%';
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id='img-panel'; panel.className='image-panel';
+    area.insertBefore(panel, area.firstChild);
+  }
+  let html = `<img src="${src}" alt="Question image">`;
+  if (q.image_caption) html += `<div class="image-caption">${q.image_caption}</div>`;
+  if (q.group_context) html += `<div class="image-caption">${q.group_context}</div>`;
+  if (q.bullets && q.bullets.length) {
+    html += '<div class="bullet-points">';
+    q.bullets.forEach(b => { html += `<div class="bullet-point">• ${b}</div>`; });
+    html += '</div>';
+  }
+  panel.innerHTML = html;
+  document.getElementById('main-panel').style.width='50%';
+}
+
+// ── Load question ─────────────────────────────────────────────────────────
+const IS_FULL = '{{ session.part }}' === 'full';
+const PART_NAMES = {'1.1':'Part 1.1 — Text Questions','1.2':'Part 1.2 — Image Group','2':'Part 2 — Image Description','3':'Part 3 — Presentation'};
+
+function loadQuestion(i) {
+  if (i >= TOTAL) { doComplete(); return; }
+  idx = i;
+  const q = QUESTIONS[i];
+
+  // Update dots & progress
+  document.querySelectorAll('.step-dot').forEach((d,j) => {
+    d.className='step-dot'+(j<i?' done':j===i?' active':'');
+  });
+  document.getElementById('prog').style.width = (i/TOTAL*100)+'%';
+  document.getElementById('top-status').textContent = `Q${i+1} of ${TOTAL}`;
+
+  // Full test: show part label inside question card and badge
+  if (IS_FULL && q.type) {
+    const lbl = document.getElementById('q-part-label');
+    if (lbl) { lbl.textContent = PART_NAMES[q.type] || ('Part ' + q.type); lbl.style.display = 'block'; }
+    const badge = document.getElementById('current-part-badge');
+    if (badge) { badge.textContent = PART_NAMES[q.type] || ('Part ' + q.type); badge.style.display = ''; }
+  }
+
+  updateImage(q);
+  showPhase('question');
+
+  document.getElementById('q-num').textContent  = i+1;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('mic-wrap').style.display = 'none';
+
+  const lbl = document.getElementById('timer-label');
+  const num = document.getElementById('timer-num');
+  lbl.className='timer-label prep'; lbl.textContent='PREPARE';
+  num.className='timer-num prep';   num.textContent=q.prep;
+
+  speak(q.text);
+  countdown(q.prep, num, 'prep', () => {
+    ting(880);
+    startRecording(q);
+  });
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────
+function countdown(secs, el, type, cb) {
+  clearInterval(timerRef);
+  let rem = secs; el.textContent = rem;
+  timerRef = setInterval(() => {
+    rem--;
+    el.textContent = rem;
+    if (rem <= 3 && type==='record') el.classList.add('urgent');
+    if (rem <= 0) { clearInterval(timerRef); cb(); }
+  }, 1000);
+}
+
+// ── Recording ─────────────────────────────────────────────────────────────
+function startRecording(q) {
+  const lbl = document.getElementById('timer-label');
+  const num = document.getElementById('timer-num');
+  lbl.className='timer-label record'; lbl.textContent='SPEAK NOW';
+  num.className='timer-num record';   num.textContent=q.answer;
+  num.classList.remove('urgent');
+
+  document.getElementById('mic-wrap').style.display='flex';
+  document.getElementById('rec-status').textContent='Recording…';
+
+  const doRec = () => {
+    chunks=[]; recStart=Date.now();
+    try { recorder = new MediaRecorder(stream,{mimeType:'audio/webm;codecs=opus'}); }
+    catch(e) { recorder = new MediaRecorder(stream); }
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.start(100);
+    document.getElementById('mic-btn').classList.add('recording');
+    startViz();
+    countdown(q.answer, num, 'record', () => { ting(660); stopAndUpload(q); });
+  };
+
+  if (stream) { doRec(); return; }
+  navigator.mediaDevices.getUserMedia({audio:true})
+    .then(s => { stream=s; doRec(); })
+    .catch(e => { console.error(e); nextQuestion(); });
+}
+
+function startViz() {
+  if (!stream) return;
+  audioCtx  = new (window.AudioContext||window.webkitAudioContext)();
+  analyser  = audioCtx.createAnalyser(); analyser.fftSize=32;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  const bars = document.querySelectorAll('.vbar');
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  const draw = () => {
+    analyser.getByteFrequencyData(data);
+    bars.forEach((b,i) => { b.style.height=Math.max(4,(data[i]||0)/255*34)+'px'; });
+    vizFrame = requestAnimationFrame(draw);
+  };
+  draw();
+}
+
+function stopViz() {
+  if (vizFrame) cancelAnimationFrame(vizFrame);
+  if (audioCtx) { audioCtx.close(); audioCtx=null; }
+  document.querySelectorAll('.vbar').forEach(b => b.style.height='4px');
+}
+
+// ── Upload + score (background — no feedback shown to student) ────────────
+async function stopAndUpload(q) {
+  clearInterval(timerRef);
+  document.getElementById('mic-btn').classList.remove('recording');
+  stopViz();
+  if (recorder && recorder.state!=='inactive') recorder.stop();
+  document.getElementById('rec-status').textContent='Uploading…';
+  await new Promise(r => setTimeout(r,300));
+
+  showPhase('processing');
+  document.getElementById('proc-msg').textContent='Saving and scoring your answer…';
+
+  const duration = (Date.now()-recStart)/1000;
+  const blob     = new Blob(chunks, {type:'audio/webm'});
+  const fd       = new FormData();
+  fd.append('session_id',    SESSION_ID);
+  fd.append('question_id',   q.id);
+  fd.append('question_number', q.number);
+  fd.append('question_text', q.text);
+  fd.append('question_type', q.type);
+  fd.append('audio',         blob, `q${q.number}.webm`);
+  fd.append('duration',      duration.toFixed(1));
+  fd.append('csrfmiddlewaretoken', CSRF);
+
+  try {
+    const res  = await fetch('/api/submit-response/', {method:'POST', body:fd});
+    const data = await res.json();
+    // No score shown — just show "Recorded" and continue
+    showRecorded(idx + 1 >= TOTAL);
+  } catch(e) {
+    console.error(e);
+    showRecorded(idx + 1 >= TOTAL);
+  }
+}
+
+function showRecorded(isLast) {
+  showPhase('recorded');
+  document.getElementById('rec-sub').textContent =
+    isLast
+      ? 'All questions done! Tap below to see your results.'
+      : `Answer saved. ${TOTAL - idx - 1} question(s) remaining.`;
+  const btn = document.getElementById('btn-next');
+  btn.innerHTML = isLast
+    ? '<i class="fas fa-flag-checkered"></i> See My Results'
+    : 'Next Question <i class="fas fa-arrow-right"></i>';
+}
+
+function nextQuestion() {
+  if (idx + 1 >= TOTAL) { doComplete(); }
+  else { loadQuestion(idx + 1); }
+}
+
+async function doComplete() {
+  showPhase('processing');
+  document.getElementById('proc-msg').textContent='Calculating your results…';
+  updateImage(null);
+  window.location.href = `/test/complete/${SESSION_ID}/`;
+}
+
+// ── Show phase ────────────────────────────────────────────────────────────
+function showPhase(name) {
+  ['instructions','question','processing','recorded'].forEach(p => {
+    const el = document.getElementById(`phase-${p}`);
+    if (el) el.style.display='none';
+  });
+  const el = document.getElementById(`phase-${name}`);
+  if (el) el.style.display='block';
+}
+</script>
+{% endblock %}

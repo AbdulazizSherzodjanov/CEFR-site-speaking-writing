@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Select Test{% endblock %}
+{% block extra_css %}
+<style>
+.select-page{padding:3.5rem 0 5rem;}
+.select-header{text-align:center;margin-bottom:2.5rem;}
+.select-header h1{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;margin-bottom:.6rem;}
+.parts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;max-width:900px;margin:0 auto;}
+.parts-grid .full-card{grid-column:span 3;}
+.part-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:18px;
+  padding:1.8rem;text-decoration:none;color:var(--text);
+  transition:all .28s;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:.6rem;
+}
+.part-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--sky-glow),transparent 55%);opacity:0;transition:opacity .28s;}
+.part-card:hover{transform:translateY(-4px);border-color:rgba(255,92,26,.4);box-shadow:0 12px 36px rgba(0,0,0,.25);}
+.part-card:hover::before{opacity:1;}
+.full-card{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.2rem;}
+.full-card .part-icon{font-size:2.5rem;}
+.part-icon{font-size:2rem;margin-bottom:.4rem;}
+.part-num{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sky-light);}
+.part-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;}
+.part-desc{color:var(--text3);font-size:.86rem;line-height:1.5;}
+.part-meta{display:flex;gap:.6rem;margin-top:.4rem;flex-wrap:wrap;}
+.meta-chip{display:flex;align-items:center;gap:.3rem;font-size:.75rem;color:var(--text4);background:var(--bg4);padding:.2rem .6rem;border-radius:7px;}
+.part-cta{display:inline-flex;align-items:center;gap:.4rem;background:var(--sky);color:#fff;padding:.5rem 1.1rem;border-radius:9px;font-weight:600;font-size:.86rem;margin-top:.5rem;width:fit-content;transition:background .2s;}
+.part-card:hover .part-cta{background:var(--sky-light);}
+.full-info{flex:1;min-width:200px;}
+.full-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container select-page">
+  <div class="select-header">
+    <div class="badge badge-sky mb-2"><i class="fas fa-graduation-cap"></i> CEFR Speaking</div>
+    <h1>Select a Test Part</h1>
+    <p class="text-muted">Each attempt uses randomly selected questions from your question bank</p>
+  </div>
+
+  <div class="parts-grid">
+    {% for p in parts %}
+      {% if p.part == 'full' %}
+      <a href="{% url 'test_start_part' p.part %}" class="part-card full-card">
+        <div class="part-icon">{{ p.icon }}</div>
+        <div class="full-info">
+          <div class="part-num">Complete Test</div>
+          <div class="part-title">{{ p.label }}</div>
+          <div class="part-desc">{{ p.desc }}</div>
+          <div class="full-chips">
+            <div class="meta-chip">💬 Part 1.1</div>
+            <div class="meta-chip">🖼️ Part 1.2</div>
+            <div class="meta-chip">📸 Part 2</div>
+            <div class="meta-chip">🎤 Part 3</div>
+            <div class="meta-chip">⏱️ {{ p.time }}</div>
+          </div>
+        </div>
+        <div class="part-cta">Start Full Test <i class="fas fa-arrow-right"></i></div>
+      </a>
+      {% else %}
+      <a href="{% url 'test_start_part' p.part %}" class="part-card">
+        <div class="part-icon">{{ p.icon }}</div>
+        <div class="part-num">{{ p.label }}</div>
+        <div class="part-title">{{ p.desc }}</div>
+        <div class="part-meta">
+          <div class="meta-chip"><i class="fas fa-clock"></i> {{ p.time }}</div>
+          {% if p.part == '1.1' %}<div class="meta-chip">3 questions</div>
+          {% elif p.part == '1.2' %}<div class="meta-chip">3 questions + image</div>
+          {% else %}<div class="meta-chip">1 question + image</div>{% endif %}
+        </div>
+        <div class="part-cta">Start <i class="fas fa-play"></i></div>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if not is_outsider %}
+  <div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Dashboard
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

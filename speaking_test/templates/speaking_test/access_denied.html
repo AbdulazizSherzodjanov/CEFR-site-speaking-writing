@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}
+  {% if reason == 'pending' %}Awaiting Approval
+  {% elif reason == 'blocked' %}Account Blocked
+  {% elif reason == 'expired' %}Subscription Ended
+  {% else %}Access Denied{% endif %}
+{% endblock %}
+
+{% block content %}
+<div style="min-height:calc(100vh - 144px);display:flex;align-items:center;justify-content:center;padding:3rem 1.5rem;">
+  <div style="max-width:480px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:24px;padding:3rem;text-align:center;">
+
+    {% if reason == 'pending' %}
+    <div style="width:72px;height:72px;background:rgba(245,166,35,.12);border:2px solid rgba(245,166,35,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+      <i class="fas fa-clock" style="font-size:2rem;color:var(--gold)"></i>
+    </div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.75rem;">Awaiting Approval</h1>
+    <p style="color:var(--text3);line-height:1.7;margin-bottom:2rem;">
+      Your account is not yet approved. Please contact your teacher or centre and let them know you have registered.
+    </p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary" style="justify-content:center;width:100%">
+      <i class="fas fa-home"></i> Back to Dashboard
+    </a>
+
+    {% elif reason == 'blocked' %}
+    <div style="width:72px;height:72px;background:rgba(255,107,107,.12);border:2px solid rgba(255,107,107,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+      <i class="fas fa-ban" style="font-size:2rem;color:var(--coral)"></i>
+    </div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.75rem;">Account Blocked</h1>
+    <p style="color:var(--text3);line-height:1.7;margin-bottom:2rem;">
+      Your account has been blocked. Please contact your teacher or centre for more information.
+    </p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary" style="justify-content:center;width:100%">
+      <i class="fas fa-home"></i> Back to Dashboard
+    </a>
+
+    {% elif reason == 'expired' %}
+    <div style="width:72px;height:72px;background:rgba(255,92,26,.12);border:2px solid rgba(255,92,26,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+      <i class="fas fa-calendar-times" style="font-size:2rem;color:var(--sky-light)"></i>
+    </div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.75rem;">Subscription Ended</h1>
+    <p style="color:var(--text3);line-height:1.7;margin-bottom:2rem;">
+      Your access period has ended. To continue using SpeakPro, please renew your subscription.
+    </p>
+    <a href="https://t.me/Sherzodjanov_Abdulaziz" target="_blank"
+       style="display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:1rem;background:linear-gradient(135deg,#2CA5E0,#1a8bc0);color:#fff;border-radius:12px;text-decoration:none;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:1rem;transition:opacity .2s;"
+       onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      <i class="fab fa-telegram" style="font-size:1.3rem"></i> Contact on Telegram to Renew
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary" style="justify-content:center;width:100%">
+      <i class="fas fa-home"></i> Back to Dashboard
+    </a>
+
+    {% else %}
+    <div style="width:72px;height:72px;background:rgba(255,107,107,.12);border:2px solid rgba(255,107,107,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+      <i class="fas fa-lock" style="font-size:2rem;color:var(--coral)"></i>
+    </div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.75rem;">Access Denied</h1>
+    <p style="color:var(--text3);line-height:1.7;margin-bottom:2rem;">
+      You do not have access to this test. Please contact your teacher or centre.
+    </p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary" style="justify-content:center;width:100%">
+      <i class="fas fa-home"></i> Back to Dashboard
+    </a>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

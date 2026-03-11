@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Test Complete{% endblock %}
+{% block extra_css %}
+<style>
+.done-page{min-height:calc(100vh - 62px - 72px);display:flex;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;}
+.done-card{background:var(--bg3);border:1px solid var(--border);border-radius:24px;padding:3.5rem 2.5rem;max-width:500px;width:100%;}
+.done-icon{font-size:4rem;margin-bottom:1.5rem;animation:pop .6s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.done-title{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;margin-bottom:.8rem;}
+.done-meta{color:var(--text3);font-size:.9rem;line-height:1.7;margin-bottom:2rem;}
+.done-score{
+  font-family:'Syne',sans-serif;font-size:3.5rem;font-weight:800;
+  background:linear-gradient(135deg,var(--sky-light),var(--mint));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin:.5rem 0;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="done-page">
+  <div class="done-card">
+    <div class="done-icon">✅</div>
+    <h1 class="done-title">Test Complete!</h1>
+    {% if session.total_score %}
+    <div class="done-score">{{ session.total_score|floatformat:1 }} / 5</div>
+    {% endif %}
+    <p class="done-meta">
+      Thank you, <strong>{{ session.full_name }}</strong>.<br>
+      Your responses have been recorded and sent to the examiner.<br>
+      You may now close this window.
+    </p>
+    <div class="badge badge-mint"><i class="fas fa-check-circle"></i> Results sent to examiner</div>
+  </div>
+</div>
+{% endblock %}

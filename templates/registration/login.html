@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Log In{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-page {
+    min-height: calc(100vh - 64px - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 3rem;
+}
+
+.auth-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--sky), #9b5de5);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 1.8rem;
+}
+
+.auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 0.3rem;
+}
+
+.auth-sub { color: var(--text-muted); text-align: center; font-size: 0.9rem; margin-bottom: 2rem; }
+
+.errorlist {
+    list-style: none;
+    margin: 0 0 1rem;
+}
+.errorlist li {
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.25);
+    color: #ff8a8a;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-icon">🎙️</div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-sub">Log in to access your dashboard and tests</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <ul class="errorlist">
+                <li>Invalid username or password. Please try again.</li>
+            </ul>
+            {% endif %}
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required autofocus placeholder="Your username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Your password">
+            </div>
+
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <button type="submit" class="btn btn-primary btn-lg w-full" style="justify-content:center;margin-top:0.5rem">
+                <i class="fas fa-sign-in-alt"></i> Log In
+            </button>
+        </form>
+
+        <p style="text-align:center;margin-top:1.5rem;font-size:0.87rem;color:var(--text-muted)">
+            Don't have an account?
+            <a href="{% url 'register' %}" style="color:var(--sky-light);font-weight:600">Register here</a>
+        </p>
+        <p style="text-align:center;margin-top:0.8rem;font-size:0.87rem;color:var(--text-muted)">
+            External candidate?
+            <a href="{% url 'outsider_entry' %}" style="color:var(--mint)">Enter with test code</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

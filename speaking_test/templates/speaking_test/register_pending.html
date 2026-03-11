@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Registration Pending{% endblock %}
+
+{% block content %}
+<div style="min-height:calc(100vh - 144px);display:flex;align-items:center;justify-content:center;padding:3rem 1.5rem;">
+  <div style="max-width:480px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:24px;padding:3rem;text-align:center;">
+    <div style="width:72px;height:72px;background:rgba(245,166,35,.12);border:2px solid rgba(245,166,35,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+      <i class="fas fa-clock" style="font-size:2rem;color:var(--gold)"></i>
+    </div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.75rem;">Waiting for Approval</h1>
+    <p style="color:var(--text3);line-height:1.7;margin-bottom:2rem;">
+      Your account has been created. An administrator needs to approve your access before you can take tests.<br><br>
+      Please contact your teacher or centre and let them know you have registered.
+    </p>
+    <a href="{% url 'login' %}" class="btn btn-primary" style="justify-content:center;width:100%">
+      <i class="fas fa-sign-in-alt"></i> Log In
+    </a>
+  </div>
+</div>
+{% endblock %}

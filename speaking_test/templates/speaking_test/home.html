@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(255,92,26,.12) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0,212,170,0.07) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+    pointer-events: none;
+}
+
+.hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--sky-glow);
+    border: 1px solid rgba(255,92,26,.3);
+    color: var(--sky-light);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+}
+
+.hero h1 .gradient-text {
+    background: linear-gradient(135deg, var(--sky-light), var(--mint));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-desc {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+}
+
+.hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.stat-item .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.stat-item .stat-label {
+    font-size: 0.82rem;
+    color: var(--text-faint);
+    margin-top: 0.1rem;
+}
+
+/* Hero Visual */
+.hero-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mic-showcase {
+    position: relative;
+    width: 320px;
+    height: 320px;
+}
+
+.mic-core {
+    position: absolute;
+    inset: 60px;
+    background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    box-shadow: 0 0 60px rgba(255,92,26,.2);
+    z-index: 2;
+}
+
+.mic-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    animation: mic-ring 3s ease-out infinite;
+}
+
+.mic-ring:nth-child(1) { inset: 40px; border-color: rgba(255,92,26,.3); animation-delay: 0s; }
+.mic-ring:nth-child(2) { inset: 20px; border-color: rgba(255,92,26,.15); animation-delay: 1s; }
+.mic-ring:nth-child(3) { inset: 0; border-color: rgba(255,92,26,.07); animation-delay: 2s; }
+
+@keyframes mic-ring {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: scale(1.1); opacity: 0; }
+}
+
+/* Floating cards on hero visual */
+.float-card {
+    position: absolute;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    animation: float 4s ease-in-out infinite;
+    z-index: 3;
+    white-space: nowrap;
+}
+
+.float-card:nth-child(5) { top: 10px; left: -20px; animation-delay: 0s; }
+.float-card:nth-child(6) { top: 20px; right: -20px; animation-delay: 1.5s; }
+.float-card:nth-child(7) { bottom: 20px; left: -30px; animation-delay: 0.8s; }
+.float-card:nth-child(8) { bottom: 10px; right: -10px; animation-delay: 2s; }
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Features */
+.features {
+    padding: 6rem 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+}
+
+.feature-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--sky-glow), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.feature-card:hover { transform: translateY(-4px); border-color: rgba(255,92,26,.3); }
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--sky-glow);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    border: 1px solid rgba(255,92,26,.2);
+}
+
+.feature-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* How it works */
+.how-it-works {
+    padding: 6rem 0;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+    position: relative;
+}
+
+.steps::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), var(--border), transparent);
+}
+
+.step {
+    text-align: center;
+    position: relative;
+}
+
+.step-num {
+    width: 64px;
+    height: 64px;
+    background: var(--surface-2);
+    border: 2px solid var(--sky);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--sky-light);
+    margin: 0 auto 1rem;
+    position: relative;
+    z-index: 1;
+    background: var(--ink);
+    box-shadow: 0 0 20px rgba(255,92,26,.2);
+}
+
+.step h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.step p { font-size: 0.83rem; color: var(--text-muted); }
+
+/* CTA section */
+.cta-section {
+    padding: 6rem 0;
+    text-align: center;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+
+.cta-inner {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.cta-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-left">
+            <div class="hero-eyebrow">
+                <i class="fas fa-star-of-life fa-spin" style="font-size:0.6rem"></i>
+                AI-Powered CEFR Assessment
+            </div>
+            <h1>
+                Master Your<br>
+                <span class="gradient-text">Speaking Skills</span><br>
+                Get Scored Instantly
+            </h1>
+            <p class="hero-desc">
+                Record your responses to CEFR-aligned questions. Our AI evaluates your grammar, vocabulary, pronunciation, and fluency — giving you instant, detailed feedback.
+            </p>
+            <div class="hero-cta">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-plus"></i> Start Free
+                </a>
+                <a href="{% url 'outsider_entry' %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-key"></i> Mock Test Code
+                </a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-num text-sky">4</div>
+                    <div class="stat-label">Test Parts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num text-mint">A1→C1</div>
+                    <div class="stat-label">CEFR Levels</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num text-gold">AI</div>
+                    <div class="stat-label">Instant Scoring</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="mic-showcase">
+                <div class="mic-ring"></div>
+                <div class="mic-ring"></div>
+                <div class="mic-ring"></div>
+                <div class="mic-core">🎙️</div>
+                <div class="float-card"><span class="text-mint">✓</span> Grammar: 4.5/5</div>
+                <div class="float-card"><span class="text-sky">🎯</span> B2 Level</div>
+                <div class="float-card"><span class="text-gold">⭐</span> Score: 4.2/5</div>
+                <div class="float-card"><span style="color:#ff8a8a">🔊</span> Pronunciation: 4/5</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+    <div class="container">
+        <div class="text-center">
+            <div class="hero-eyebrow" style="justify-content:center">Features</div>
+            <h2 style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;margin-top:1rem">Everything You Need to Excel</h2>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI Scoring Engine</h3>
+                <p>GPT-powered evaluation scores your grammar, vocabulary, pronunciation, fluency, and coherence in seconds.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Progress Dashboard</h3>
+                <p>Track your streak, view history, and see your average scores broken down by test part and skill.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Telegram Reports</h3>
+                <p>Your teacher receives your audio recordings and detailed scores directly on Telegram instantly.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Real-time Timer</h3>
+                <p>Preparation countdown, audio ting notification, and answer timer — just like a real IELTS exam.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎤</div>
+                <h3>Voice Recognition</h3>
+                <p>Your speech is recorded and automatically transcribed using OpenAI Whisper for accurate evaluation.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏅</div>
+                <h3>Mock Test Codes</h3>
+                <p>External candidates can take tests using access codes. Results exported to Excel for easy review.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="how-it-works">
+    <div class="container">
+        <div class="text-center">
+            <h2 style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800">How It Works</h2>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <h4>Register or Enter Code</h4>
+                <p>Create an account or use your mock test code and candidate ID.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <h4>Choose Test Part</h4>
+                <p>Select Part 1.1, 1.2, 2, or 3 based on your test schedule.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <h4>Listen & Speak</h4>
+                <p>Hear instructions, prepare, then record your answers within the time limit.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <h4>Get Instant Score</h4>
+                <p>Receive detailed AI feedback. Your teacher gets the recording via Telegram.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta-inner">
+        <h2>Ready to <span class="text-sky">Start Speaking?</span></h2>
+        <p class="text-muted mb-3" style="font-size:1.05rem;line-height:1.7">Join center students improving their CEFR speaking skills every day.</p>
+        <div class="flex flex-center gap-2">
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-rocket"></i> Get Started Free
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">Log In</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

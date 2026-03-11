@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard{padding:2.5rem 0 4rem;}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem;}
+.welcome-text h1{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;}
+.welcome-text p{color:var(--text3);margin-top:.3rem;}
+
+/* Announcements */
+.announcements-area { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .6rem; }
+.ann-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 14px; padding: .85rem 1.1rem;
+  border: 1px solid; animation: annSlide .35s ease;
+}
+@keyframes annSlide { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+.ann-inner { display: flex; align-items: center; gap: .75rem; flex: 1; min-width: 0; }
+.ann-emoji { font-size: 1.25rem; flex-shrink: 0; }
+.ann-body { font-size: .88rem; line-height: 1.5; }
+.ann-body strong { display: block; margin-bottom: .1rem; }
+.ann-text { color: var(--text3); }
+.ann-close {
+  background: none; border: none; font-size: 1.4rem; line-height: 1;
+  cursor: pointer; color: inherit; opacity: .55; padding: 0 .2rem;
+  flex-shrink: 0; transition: opacity .2s;
+}
+.ann-close:hover { opacity: 1; }
+
+.ann-info    { background: var(--sky-glow);              border-color: rgba(255,92,26,.25); color: var(--sky-light); }
+.ann-success { background: rgba(0,212,170,.08);          border-color: rgba(0,212,170,.25);  color: var(--mint); }
+.ann-warning { background: rgba(245,166,35,.08);         border-color: rgba(245,166,35,.22); color: var(--gold); }
+.ann-promo   { background: rgba(255,107,107,.08);        border-color: rgba(255,107,107,.22);color: var(--coral); }
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2rem;}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;position:relative;overflow:hidden;transition:all .3s;}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;}
+.stat-card.streak::after{background:linear-gradient(to right,#ff6b6b,var(--gold));}
+.stat-card.score::after{background:linear-gradient(to right,var(--sky),var(--mint));}
+.stat-card.tests::after{background:linear-gradient(to right,var(--mint),#00a8ff);}
+.stat-card.level::after{background:linear-gradient(to right,var(--gold),#ff6b6b);}
+.stat-icon{font-size:1.8rem;margin-bottom:.8rem;}
+.stat-value{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;line-height:1;margin-bottom:.3rem;}
+.stat-name{font-size:.83rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.stat-sub{font-size:.78rem;color:var(--text4);margin-top:.4rem;}
+
+/* Main grid */
+.dash-grid{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;}
+
+/* Part buttons */
+.part-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+.part-btn{
+  background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.2rem;text-decoration:none;color:var(--text);transition:all .25s;
+  display:flex;flex-direction:column;gap:.4rem;position:relative;overflow:hidden;
+}
+.part-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--sky-glow),transparent);opacity:0;transition:opacity .25s;}
+.part-btn:hover{border-color:rgba(255,92,26,.4);transform:translateY(-2px);}
+.part-btn:hover::before{opacity:1;}
+.part-btn.full-btn{grid-column:span 2;flex-direction:row;align-items:center;gap:1rem;}
+.part-icon{font-size:1.4rem;}
+.part-num{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--sky-light);}
+.part-desc{font-size:.82rem;color:var(--text3);}
+.part-level-badge{font-size:.72rem;color:var(--text4);margin-top:.2rem;}
+
+/* History */
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:.85rem 0;border-bottom:1px solid var(--border);transition:padding .15s;}
+.history-item:last-child{border-bottom:none;}
+.history-item:hover{padding-left:.4rem;}
+.history-part{font-weight:600;font-size:.92rem;margin-bottom:.2rem;}
+.history-date{font-size:.76rem;color:var(--text4);}
+.s-chip{min-width:50px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;}
+.s-high{background:rgba(0,212,170,.15);color:var(--mint);border:1px solid rgba(0,212,170,.3);}
+.s-mid{background:var(--sky-glow);color:var(--sky-light);border:1px solid rgba(255,92,26,.3);}
+.s-low{background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.2);}
+.s-none{background:var(--bg4);color:var(--text4);border:1px solid var(--border);}
+
+/* Profile sidebar */
+.profile-section{display:flex;flex-direction:column;gap:1.2rem;}
+.profile-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;text-align:center;}
+.avatar-circle{width:76px;height:76px;background:linear-gradient(135deg,var(--orange),var(--orange2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:#fff;margin:0 auto 1rem;box-shadow:0 0 24px rgba(255,92,26,.3);}
+.profile-name{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:.3rem;}
+.profile-teacher{font-size:.83rem;color:var(--text3);margin-bottom:1rem;}
+.streak-display{display:flex;align-items:center;justify-content:center;gap:.5rem;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:.7rem;margin-bottom:1rem;}
+.streak-num{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--gold);}
+
+/* Performance */
+.perf-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem;}
+.perf-card h3{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;margin-bottom:1rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.perf-bar-item{margin-bottom:.8rem;}
+.perf-bar-label{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem;}
+.perf-bar-track{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.perf-bar-fill{height:100%;border-radius:3px;background:linear-gradient(to right,var(--sky),var(--mint));transition:width 1s ease;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+
+  {% if not has_access %}
+  <div style="background:{% if access_reason == 'pending' %}rgba(245,166,35,.1){% elif access_reason == 'blocked' %}rgba(255,107,107,.1){% else %}rgba(255,92,26,.1){% endif %};border:1px solid {% if access_reason == 'pending' %}rgba(245,166,35,.3){% elif access_reason == 'blocked' %}rgba(255,107,107,.3){% else %}rgba(255,92,26,.3){% endif %};border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <i class="fas {% if access_reason == 'pending' %}fa-clock{% elif access_reason == 'blocked' %}fa-ban{% else %}fa-calendar-times{% endif %}" style="font-size:1.3rem;color:{% if access_reason == 'pending' %}var(--gold){% elif access_reason == 'blocked' %}var(--coral){% else %}var(--sky-light){% endif %}"></i>
+      <div>
+        <strong>{% if access_reason == 'pending' %}Awaiting Approval{% elif access_reason == 'blocked' %}Account Blocked{% else %}Subscription Ended{% endif %}</strong>
+        <div style="font-size:.85rem;color:var(--text3);margin-top:.1rem">
+          {% if access_reason == 'pending' %}Your account is pending admin approval.{% elif access_reason == 'blocked' %}Your account has been blocked. Contact your teacher.{% else %}Your access period has ended. Renew to continue.{% endif %}
+        </div>
+      </div>
+    </div>
+    {% if access_reason == 'expired' %}
+    <a href="https://t.me/Sherzodjanov_Abdulaziz" target="_blank"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.1rem;background:#2CA5E0;color:#fff;border-radius:9px;text-decoration:none;font-weight:700;font-size:.85rem;white-space:nowrap;">
+      <i class="fab fa-telegram"></i> Renew on Telegram
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if announcements %}
+  <div class="announcements-area" id="announcementsArea">
+    {% for ann in announcements %}
+    <div class="ann-banner ann-{{ ann.style }}" id="ann-{{ ann.id }}">
+      <div class="ann-inner">
+        <span class="ann-emoji">{{ ann.emoji }}</span>
+        <div class="ann-body">
+          <strong>{{ ann.title }}</strong>
+          <span class="ann-text">{{ ann.body|safe }}</span>
+        </div>
+      </div>
+      {% if ann.show_once %}
+      <button class="ann-close" onclick="dismissAnn({{ ann.id }})" title="Dismiss">×</button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="dash-header">
+    <div class="welcome-text">
+      <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+      <p>{% if profile.teacher %}Teacher: {{ profile.teacher.name }}{% else %}Keep practising to improve your CEFR level.{% endif %}</p>
+    </div>
+    <a href="{% url 'test_select' %}" class="btn btn-primary">
+      <i class="fas fa-microphone"></i> Take a Test
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card streak">
+      <div class="stat-icon"><i class="fas fa-fire"></i></div>
+      <div class="stat-value text-gold">{{ profile.streak }}</div>
+      <div class="stat-name">Day Streak</div>
+      <div class="stat-sub">Days in a row</div>
+    </div>
+    <div class="stat-card score">
+      <div class="stat-icon"><i class="fas fa-star"></i></div>
+      <div class="stat-value text-sky">{% if avg_score %}{{ avg_score }}{% else %}—{% endif %}</div>
+      <div class="stat-name">Avg Score</div>
+      <div class="stat-sub">Out of 5.0</div>
+    </div>
+    <div class="stat-card tests">
+      <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+      <div class="stat-value text-mint">{{ total_tests }}</div>
+      <div class="stat-name">Tests Done</div>
+      <div class="stat-sub">Total completed</div>
+    </div>
+    <div class="stat-card level">
+      <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+      <div class="stat-value text-gold">
+        {% if avg_score %}
+          {% if avg_score >= 4.5 %}C1
+          {% elif avg_score >= 3.5 %}B2
+          {% elif avg_score >= 2.5 %}B1
+          {% elif avg_score >= 1.5 %}A2
+          {% else %}A1{% endif %}
+        {% else %}—{% endif %}
+      </div>
+      <div class="stat-name">Est. Level</div>
+      <div class="stat-sub">Based on scores</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div>
+      <!-- Start test -->
+      <div class="card mb-3">
+        <h2 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:1.2rem">
+          <i class="fas fa-bolt text-gold"></i> Start a Test
+        </h2>
+        <div class="part-grid">
+          {% for p in parts %}
+            {% if p.part == 'full' %}
+            <a href="{% url 'test_start_part' p.part %}" class="part-btn full-btn">
+              <div class="part-icon"><i class="fas fa-layer-group text-sky"></i></div>
+              <div>
+                <div class="part-num">{{ p.label }}</div>
+                <div class="part-desc">{{ p.desc }}</div>
+                <div class="part-level-badge">All 4 parts · 8 questions</div>
+              </div>
+            </a>
+            {% else %}
+            <a href="{% url 'test_start_part' p.part %}" class="part-btn">
+              <div class="part-icon">
+                {% if p.part == '1.1' %}<i class="fas fa-comment-dots text-sky"></i>
+                {% elif p.part == '1.2' %}<i class="fas fa-image text-mint"></i>
+                {% elif p.part == '2' %}<i class="fas fa-camera text-gold"></i>
+                {% else %}<i class="fas fa-microphone text-coral"></i>{% endif %}
+              </div>
+              <div class="part-num">{{ p.label }}</div>
+              <div class="part-desc">{{ p.desc }}</div>
+              <div class="part-level-badge">{{ p.level }}</div>
+            </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Recent tests -->
+      <div class="card">
+        <h2 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:1.2rem">
+          <i class="fas fa-history text-sky"></i> Recent Tests
+        </h2>
+        {% for session in sessions %}
+        <div class="history-item">
+          <div>
+            <div class="history-part">
+              {% if session.part == 'full' %}Full Test
+              {% elif session.part == '1.1' %}Part 1.1 — Text Questions
+              {% elif session.part == '1.2' %}Part 1.2 — Image Group
+              {% elif session.part == '2' %}Part 2 — Image Description
+              {% elif session.part == '3' %}Part 3 — Presentation
+              {% else %}Part {{ session.part }}{% endif %}
+            </div>
+            <div class="history-date">
+              <i class="fas fa-calendar-alt"></i>
+              {{ session.started_at|date:"M d, Y" }} at {{ session.started_at|time:"H:i" }}
+              &nbsp;·&nbsp; {{ session.responses.count }} question{{ session.responses.count|pluralize }}
+              {% if session.rating_score %}&nbsp;·&nbsp; Rating: <strong style="color:var(--gold)">{{ session.rating_score }}/75</strong>{% endif %}
+            </div>
+          </div>
+          <div class="s-chip {% if session.total_score %}{% if session.total_score >= 4 %}s-high{% elif session.total_score >= 3 %}s-mid{% else %}s-low{% endif %}{% else %}s-none{% endif %}">
+            {% if session.total_score %}{{ session.total_score|floatformat:1 }}{% else %}—{% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:2rem 0;color:var(--text4)">
+          <i class="fas fa-microphone" style="font-size:2rem;margin-bottom:.8rem;display:block"></i>
+          <p>No tests yet. Take your first test!</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="profile-section">
+      <div class="profile-card">
+        <div class="avatar-circle">{{ request.user.first_name.0|upper }}{{ request.user.last_name.0|upper }}</div>
+        <div class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+        <div class="profile-teacher">
+          {% if profile.teacher %}<i class="fas fa-chalkboard-teacher"></i> {{ profile.teacher.name }}
+          {% else %}<i class="fas fa-envelope"></i> {{ request.user.email }}{% endif %}
+        </div>
+        <div class="streak-display">
+          <i class="fas fa-fire" style="color:var(--coral)"></i>
+          <div>
+            <div class="streak-num">{{ profile.streak }}</div>
+            <div style="font-size:.74rem;color:var(--text3)">day streak</div>
+          </div>
+        </div>
+        <a href="{% url 'student_progress' %}" class="btn btn-secondary w-full mb-2" style="justify-content:center">
+          <i class="fas fa-chart-line"></i> My Progress
+        </a>
+        <a href="{% url 'logout' %}" class="btn btn-secondary w-full" style="justify-content:center">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+
+      {% if part_stats %}
+      <div class="perf-card">
+        <h3>Performance by Part</h3>
+        {% for stat in part_stats %}
+        <div class="perf-bar-item">
+          <div class="perf-bar-label">
+            <span>
+              {% if stat.part == 'full' %}Full Test
+              {% elif stat.part == '1.1' %}Part 1.1
+              {% elif stat.part == '1.2' %}Part 1.2
+              {% elif stat.part == '2' %}Part 2
+              {% elif stat.part == '3' %}Part 3
+              {% else %}Part {{ stat.part }}{% endif %}
+            </span>
+            <span class="text-sky">{{ stat.avg|floatformat:1 }}/5</span>
+          </div>
+          <div class="perf-bar-track">
+            <div class="perf-bar-fill" style="width:{% widthratio stat.avg 5 100 %}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card" style="text-align:center">
+        <i class="fas fa-lightbulb text-gold" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>
+        <p style="font-size:.86rem;color:var(--text3);line-height:1.6">
+          Practice daily to improve your streak and CEFR level. Aim for at least one test per day.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function dismissAnn(id) {
+  const el = document.getElementById('ann-' + id);
+  if (el) {
+    el.style.transition = 'all .25s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-6px)';
+    setTimeout(() => el.remove(), 260);
+  }
+  await fetch(`/api/dismiss-announcement/${id}/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+  });
+}
+</script>
+{% endblock %}

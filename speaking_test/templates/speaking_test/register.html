@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-page {
+    min-height: calc(100vh - 64px - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 3rem;
+}
+
+.auth-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--mint), var(--sky));
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 1.5rem;
+}
+
+.auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 0.3rem;
+}
+
+.auth-sub { color: var(--text-muted); text-align: center; font-size: 0.9rem; margin-bottom: 2rem; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.field-error {
+    font-size: 0.8rem;
+    color: #ff8a8a;
+    margin-top: 0.3rem;
+}
+
+.password-hint {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-top: 0.3rem;
+    line-height: 1.4;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-icon">✨</div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-sub">Join SpeakPro and start improving your CEFR speaking</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}"
+                           required placeholder="John">
+                    {% if form.first_name.errors %}<div class="field-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}"
+                           required placeholder="Smith">
+                    {% if form.last_name.errors %}<div class="field-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" value="{{ form.username.value|default:'' }}"
+                       required placeholder="johnsmith99">
+                {% if form.username.errors %}<div class="field-error">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Teacher (Optional)</label>
+                <select name="teacher">
+                    <option value="">-- Select Your Teacher --</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password1" required placeholder="Min 8 characters">
+                    {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="password2" required placeholder="Repeat password">
+                    {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="password-hint">Password must be at least 8 characters, not all numeric, and not too similar to your username.</div>
+
+            <button type="submit" class="btn btn-success btn-lg w-full" style="justify-content:center;margin-top:1.5rem">
+                <i class="fas fa-user-plus"></i> Create Account
+            </button>
+        </form>
+
+        <p style="text-align:center;margin-top:1.5rem;font-size:0.87rem;color:var(--text-muted)">
+            Already have an account?
+            <a href="{% url 'login' %}" style="color:var(--sky-light);font-weight:600">Log in</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
