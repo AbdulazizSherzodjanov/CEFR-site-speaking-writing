@@ -1,0 +1,693 @@
+{% extends 'base.html' %}
+{% block title %}Writing Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Page ─────────────────────────────────────────────────────────────── */
+.wc-page { padding: 2rem 0 5rem; }
+
+/* ── Top bar ──────────────────────────────────────────────────────────── */
+.wc-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2.2rem;
+}
+.wc-title h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  margin: .35rem 0 .25rem;
+}
+.wc-title p { font-size: .88rem; color: var(--text3); line-height: 1.5; max-width: 480px; }
+
+/* ── Timer pod ────────────────────────────────────────────────────────── */
+.timer-pod {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  padding: .9rem 1.4rem;
+  position: relative;
+  overflow: hidden;
+}
+.timer-pod::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 50%, var(--sky-glow), transparent 65%);
+  pointer-events: none;
+}
+.t-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .15rem; }
+.t-digits {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 800;
+  min-width: 108px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+  color: var(--text);
+  transition: color .3s;
+  position: relative;
+}
+.t-digits.running { color: var(--mint); }
+.t-digits.urgent  { color: var(--coral); animation: upulse .7s ease-in-out infinite; }
+.t-digits.done    { color: var(--coral); }
+@keyframes upulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.t-btns { display: flex; flex-direction: column; gap: .35rem; }
+.tb {
+  padding: .32rem .95rem;
+  border-radius: 8px; border: none;
+  font-size: .8rem; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all .18s; letter-spacing: .02em;
+}
+.tb-go    { background: var(--mint); color: #0a1a10; }
+.tb-go:hover    { filter: brightness(1.1); transform: translateY(-1px); }
+.tb-pause { background: var(--bg4); color: var(--text2); border: 1px solid var(--border2); }
+.tb-pause:hover { border-color: var(--sky); color: var(--sky-light); }
+.tb-reset { background: rgba(255,107,107,.1); color: var(--coral); border: 1px solid rgba(255,107,107,.22); }
+.tb-reset:hover { background: rgba(255,107,107,.2); }
+
+/* ── Layout grid ──────────────────────────────────────────────────────── */
+.wc-grid {
+  display: grid;
+  grid-template-columns: 1.55fr .78fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Left panel ───────────────────────────────────────────────────────── */
+.wc-panel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.8rem;
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: .85rem;
+  margin-bottom: 1.4rem;
+}
+.wf label {
+  display: block;
+  font-size: .71rem;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .38rem;
+}
+.wf input,
+.wf textarea,
+.wf select {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: .62rem .9rem;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.wf input:focus, .wf textarea:focus, .wf select:focus {
+  border-color: var(--sky);
+  box-shadow: 0 0 0 3px rgba(255,92,26,.12);
+}
+.wf textarea { resize: vertical; line-height: 1.65; }
+.wf select option { background: var(--bg3); }
+
+.notice {
+  display: flex; gap: .7rem; align-items: flex-start;
+  background: rgba(245,166,35,.07);
+  border: 1px solid rgba(245,166,35,.22);
+  border-radius: 12px;
+  padding: .85rem 1rem;
+  font-size: .84rem;
+  color: var(--gold);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+.notice i { margin-top: .15rem; flex-shrink: 0; }
+
+/* ── Task blocks ──────────────────────────────────────────────────────── */
+.task-block {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.3rem;
+  margin-bottom: 1.1rem;
+  transition: border-color .2s;
+}
+.task-block:focus-within { border-color: rgba(255,92,26,.3); }
+.task-hd { display: flex; align-items: center; gap: .7rem; margin-bottom: 1.1rem; }
+.pip {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.pip-a { background: var(--sky-light); box-shadow: 0 0 7px rgba(255,92,26,.55); }
+.pip-b { background: var(--mint);      box-shadow: 0 0 7px rgba(0,212,170,.55); }
+.pip-c { background: var(--gold);      box-shadow: 0 0 7px rgba(245,166,35,.55); }
+.ttag {
+  font-size: .71rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .09em; padding: .2rem .65rem; border-radius: 6px;
+}
+.ttag-a { background: rgba(255,92,26,.14); color: var(--sky-light); border: 1px solid rgba(255,92,26,.25); }
+.ttag-b { background: rgba(0,212,170,.1);   color: var(--mint);      border: 1px solid rgba(0,212,170,.2); }
+.ttag-c { background: rgba(245,166,35,.1);  color: var(--gold);      border: 1px solid rgba(245,166,35,.2); }
+.tname { font-family: 'Syne', sans-serif; font-size: .95rem; font-weight: 700; color: var(--text2); }
+
+/* live word-count chip inside textarea */
+.ta-wrap { position: relative; }
+.wcount-chip {
+  position: absolute; bottom: .55rem; right: .7rem;
+  font-size: .72rem; color: var(--text4);
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 5px; padding: .1rem .4rem;
+  pointer-events: none; font-variant-numeric: tabular-nums;
+}
+
+/* ── Bottom actions ───────────────────────────────────────────────────── */
+.wc-actions { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 1.4rem; align-items: center; }
+.wc-note {
+  font-size: .77rem; color: var(--text4); margin-top: .9rem; line-height: 1.6;
+  padding-top: .9rem; border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RIGHT COLUMN — Results
+══════════════════════════════════════════════════════════════ */
+.rstack { display: flex; flex-direction: column; gap: 1rem; }
+
+/* hero */
+.score-hero {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.8rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.score-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: 50%; transform: translateX(-50%);
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(255,92,26,.18), transparent 66%);
+  pointer-events: none;
+}
+.sh-eye { font-size: .69rem; text-transform: uppercase; letter-spacing: .13em; color: var(--text3); margin-bottom: .5rem; position: relative; }
+.sh-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 5.8rem; font-weight: 800; line-height: 1;
+  letter-spacing: -.05em;
+  background: linear-gradient(135deg, var(--sky-light) 20%, var(--mint));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative; transition: all .4s;
+}
+.sh-sub { font-size: .84rem; color: var(--text3); position: relative; margin-top: .4rem; }
+.sh-sub strong { color: var(--text2); }
+
+/* band 2×2 */
+.band-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.bc {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1rem 1.1rem;
+  position: relative; overflow: hidden;
+}
+.bc::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+}
+.bc-a::after { background: linear-gradient(to right,var(--sky-light),transparent); }
+.bc-b::after { background: linear-gradient(to right,var(--mint),transparent); }
+.bc-c::after { background: linear-gradient(to right,var(--gold),transparent); }
+.bc-t::after { background: linear-gradient(to right,var(--coral),transparent); }
+.bc-lbl { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .09em; margin-bottom: .3rem; }
+.bc-val {
+  font-family: 'Syne', sans-serif; font-size: 2.6rem; font-weight: 800;
+  line-height: 1.1; transition: all .3s;
+}
+.bc-a .bc-val { color: var(--sky-light); }
+.bc-b .bc-val { color: var(--mint); }
+.bc-c .bc-val { color: var(--gold); }
+.bc-t .bc-val { font-size: 1rem; color: var(--text3); }
+.bc-sub { font-size: .74rem; color: var(--text4); margin-top: .25rem; min-height: 1.1em; }
+
+/* stats */
+.stats-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.si {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .68rem 1.1rem; border-bottom: 1px solid var(--border);
+  font-size: .87rem; transition: background .15s;
+}
+.si:hover { background: var(--bg4); }
+.si:last-child { border-bottom: none; }
+.si-lbl { color: var(--text3); display: flex; align-items: center; gap: .5rem; }
+.si-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--text); }
+
+/* result cards */
+.rc {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.2rem;
+}
+.rc-title {
+  font-size: .73rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--text3);
+  margin-bottom: .9rem; display: flex; align-items: center; gap: .45rem;
+}
+
+/* feedback */
+.fb-empty { font-size: .85rem; color: var(--text4); padding: .6rem 0; line-height: 1.6; }
+.fb-sec { margin-bottom: .95rem; }
+.fb-sec:last-child { margin-bottom: 0; }
+.fb-head {
+  display: flex; align-items: center; gap: .55rem;
+  padding-bottom: .48rem; margin-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
+.fb-band { font-family: 'Syne',sans-serif; font-size: .77rem; font-weight: 800; padding: .14rem .48rem; border-radius: 5px; background: var(--bg4); border: 1px solid var(--border2); color: var(--text2); }
+.fb-title { font-weight: 600; font-size: .85rem; color: var(--text2); }
+.fb-pt { display: flex; gap: .5rem; font-size: .83rem; color: var(--text3); line-height: 1.6; padding: .16rem 0; }
+.fb-pt i { color: var(--sky-light); flex-shrink: 0; margin-top: .2rem; font-size: .72rem; }
+.fb-overall { border-top: 1px solid var(--border); padding-top: .85rem; margin-top: .4rem; }
+.fb-highlight { font-family: 'Syne',sans-serif; font-weight: 700; font-size: .97rem; }
+
+/* grammar */
+.grammar-preview {
+  background: var(--bg4); border: 1px solid var(--border);
+  border-radius: 10px; padding: .85rem 1rem;
+  font-size: .85rem; color: var(--text2); line-height: 1.75;
+  min-height: 52px; margin-bottom: .8rem;
+}
+.g-err {
+  background: rgba(255,107,107,.2); color: var(--coral);
+  border-bottom: 2px solid var(--coral);
+  padding: 1px 3px; border-radius: 4px; font-weight: 700;
+}
+.g-list {
+  background: var(--bg4); border: 1px solid var(--border);
+  border-radius: 10px; padding: .8rem 1rem .8rem 1.7rem;
+  font-size: .83rem; color: var(--text3); line-height: 1.85; margin: 0;
+}
+
+/* score pop animation */
+@keyframes scorePop { from{transform:scale(.75);opacity:.3}to{transform:scale(1);opacity:1} }
+.pop { animation: scorePop .4s cubic-bezier(.34,1.56,.64,1); }
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media(max-width:1100px){ .wc-grid{grid-template-columns:1fr} }
+@media(max-width:680px){
+  .meta-row{grid-template-columns:1fr}
+  .band-grid{grid-template-columns:1fr 1fr}
+  .t-digits{font-size:1.9rem;min-width:86px}
+  .wc-title h1{font-size:1.55rem}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container wc-page">
+
+  <!-- ── Top header ──────────────────────────────────────────────────────── -->
+  <div class="wc-topbar">
+    <div class="wc-title">
+      <span class="badge badge-mint"><i class="fas fa-pen-nib"></i>&nbsp;Writing</span>
+      <h1>Writing Exam Checker</h1>
+      <p>Exam-style workspace for Writing 1.1, Writing 1.2, and Task 2. Start the timer, enter the answers, then press <strong>Check &amp; Score</strong>.</p>
+    </div>
+
+    <div class="timer-pod">
+      <div>
+        <div class="t-label">Time remaining</div>
+        <div class="t-digits" id="timerEl">60:00</div>
+      </div>
+      <div class="t-btns">
+        <button class="tb tb-go"    onclick="startTimer()"><i class="fas fa-play"></i> Start</button>
+        <button class="tb tb-pause" onclick="pauseTimer()"><i class="fas fa-pause"></i> Pause</button>
+        <button class="tb tb-reset" onclick="resetTimer()"><i class="fas fa-undo"></i> Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wc-grid">
+
+    <!-- ══════════ LEFT: Input ══════════ -->
+    <div class="wc-panel">
+
+      <div class="meta-row">
+        <div class="wf"><label>Student Name</label><input type="text" id="studentName" placeholder="Full name"></div>
+        <div class="wf"><label>Date</label><input type="text" id="examDate" placeholder="DD / MM / YYYY"></div>
+        <div class="wf"><label>Teacher</label><input type="text" id="teacherName" placeholder="Teacher name"></div>
+      </div>
+
+      <div class="notice">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span>Gives an <strong>estimated</strong> band via rule-based analysis only. Final marking must use the official rubric. Weighting: 1.1 = max 5 pts · 1.2 = max 6 pts · Task 2 = max 6 pts (total 17).</span>
+      </div>
+
+      <!-- Writing 1.1 -->
+      <div class="task-block">
+        <div class="task-hd">
+          <span class="pip pip-a"></span>
+          <span class="ttag ttag-a">Writing 1.1</span>
+          <span class="tname">Short Answer Response</span>
+        </div>
+        <div class="wf" style="margin-bottom:.8rem">
+          <label>Prompt / Question</label>
+          <textarea id="prompt11" rows="2" placeholder="Paste the Writing 1.1 prompt here…"></textarea>
+        </div>
+        <div class="wf">
+          <label>Student Answer</label>
+          <div class="ta-wrap">
+            <textarea id="answer11" rows="5" placeholder="Student writes here…" oninput="chip(this,'wc11')"></textarea>
+            <span class="wcount-chip" id="wc11">0 w</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Writing 1.2 -->
+      <div class="task-block">
+        <div class="task-hd">
+          <span class="pip pip-b"></span>
+          <span class="ttag ttag-b">Writing 1.2</span>
+          <span class="tname">Extended Response</span>
+        </div>
+        <div class="wf" style="margin-bottom:.8rem">
+          <label>Prompt / Question</label>
+          <textarea id="prompt12" rows="2" placeholder="Paste the Writing 1.2 prompt here…"></textarea>
+        </div>
+        <div class="wf">
+          <label>Student Answer</label>
+          <div class="ta-wrap">
+            <textarea id="answer12" rows="5" placeholder="Student writes here…" oninput="chip(this,'wc12')"></textarea>
+            <span class="wcount-chip" id="wc12">0 w</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 2 -->
+      <div class="task-block">
+        <div class="task-hd">
+          <span class="pip pip-c"></span>
+          <span class="ttag ttag-c">Task 2</span>
+          <span class="tname">Essay / Argument</span>
+        </div>
+        <div class="wf" style="margin-bottom:.8rem">
+          <label>Prompt / Question</label>
+          <textarea id="prompt2" rows="2" placeholder="Paste the Task 2 prompt here…"></textarea>
+        </div>
+        <div class="wf">
+          <label>Student Answer</label>
+          <div class="ta-wrap">
+            <textarea id="answer2" rows="7" placeholder="Student writes here…" oninput="chip(this,'wct2')"></textarea>
+            <span class="wcount-chip" id="wct2">0 w</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wc-actions">
+        <button class="btn btn-primary btn-lg" onclick="checkAll()">
+          <i class="fas fa-circle-check"></i> Check &amp; Score
+        </button>
+        <button class="btn btn-secondary" onclick="clearAll()">
+          <i class="fas fa-trash-alt"></i> Clear All
+        </button>
+      </div>
+
+      <p class="wc-note">
+        Scores are converted to an official standard score (0–75) using the published conversion table. Expert mark = sum of raw bands (1.1 max 5 · 1.2 max 6 · Task 2 max 6).
+      </p>
+    </div>
+
+    <!-- ══════════ RIGHT: Results ══════════ -->
+    <div class="rstack">
+
+      <div class="score-hero">
+        <div class="sh-eye">Estimated Standard Score</div>
+        <div class="sh-num" id="stdScore">—</div>
+        <div class="sh-sub">Expert mark: <strong id="expertMark">—</strong> / 17</div>
+      </div>
+
+      <div class="band-grid">
+        <div class="bc bc-a">
+          <div class="bc-lbl">Writing 1.1</div>
+          <div class="bc-val" id="band11">—</div>
+          <div class="bc-sub" id="meta11">No analysis yet</div>
+        </div>
+        <div class="bc bc-b">
+          <div class="bc-lbl">Writing 1.2</div>
+          <div class="bc-val" id="band12">—</div>
+          <div class="bc-sub" id="meta12">No analysis yet</div>
+        </div>
+        <div class="bc bc-c">
+          <div class="bc-lbl">Task 2</div>
+          <div class="bc-val" id="band2">—</div>
+          <div class="bc-sub" id="meta2">No analysis yet</div>
+        </div>
+        <div class="bc bc-t">
+          <div class="bc-lbl">Timer</div>
+          <div class="bc-val" id="timerStatus">Not started</div>
+          <div class="bc-sub">Alerts when time runs out</div>
+        </div>
+      </div>
+
+      <div class="stats-card">
+        <div class="si"><span class="si-lbl"><i class="fas fa-align-left text-sky"></i> Total words</span><span class="si-val" id="wcAll">0</span></div>
+        <div class="si"><span class="si-lbl"><i class="fas fa-minus text-mint"></i> Sentences</span><span class="si-val" id="scAll">0</span></div>
+        <div class="si"><span class="si-lbl"><i class="fas fa-paragraph text-gold"></i> Paragraphs</span><span class="si-val" id="pcAll">0</span></div>
+      </div>
+
+      <div class="rc">
+        <div class="rc-title"><i class="fas fa-lightbulb text-gold"></i> Feedback</div>
+        <div id="feedbackBox">
+          <p class="fb-empty">Press <strong style="color:var(--sky-light)">Check &amp; Score</strong> to generate per-section feedback.</p>
+        </div>
+      </div>
+
+      <div class="rc">
+        <div class="rc-title"><i class="fas fa-spell-check text-coral"></i> Grammar Check</div>
+        <div class="wf gc-sel">
+          <label>Check section</label>
+          <select id="grammarSel" onchange="renderGrammar()">
+            <option value="answer11">Writing 1.1</option>
+            <option value="answer12">Writing 1.2</option>
+            <option value="answer2">Task 2</option>
+          </select>
+        </div>
+        <div class="grammar-preview" id="grammarMarked">Highlighted issues appear here after checking.</div>
+        <div class="rc-title" style="margin-bottom:.5rem;margin-top:.2rem"><i class="fas fa-list text-sky"></i> Issue list</div>
+        <ul class="g-list" id="grammarList">
+          <li>Press Check &amp; Score to analyse grammar.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ═══════════════════════════════ TIMER ══════════════════════════════════ */
+let totalSec = 3600, tInt = null, tRunning = false;
+
+function renderTimer() {
+  const m = String(Math.floor(totalSec / 60)).padStart(2,'0');
+  const s = String(totalSec % 60).padStart(2,'0');
+  const el = document.getElementById('timerEl');
+  el.textContent = `${m}:${s}`;
+  el.className = 't-digits' + (
+    totalSec === 0        ? ' done'    :
+    totalSec <= 300 && tRunning ? ' urgent' :
+    tRunning              ? ' running' : '');
+  const ts = document.getElementById('timerStatus');
+  ts.textContent = totalSec === 0 ? '⏰ Time up!' : tRunning ? '▶ Running' : totalSec === 3600 ? 'Not started' : '⏸ Paused';
+}
+function startTimer() {
+  if (tRunning) return;
+  tRunning = true; renderTimer();
+  tInt = setInterval(() => { if (totalSec > 0) { totalSec--; renderTimer(); } else { clearInterval(tInt); tRunning = false; } }, 1000);
+}
+function pauseTimer() { tRunning = false; clearInterval(tInt); renderTimer(); }
+function resetTimer()  { tRunning = false; clearInterval(tInt); totalSec = 3600; renderTimer(); }
+renderTimer();
+
+/* ════════════════════════ LIVE WORD CHIPS ═══════════════════════════════ */
+function wordCount(t) { return (t.trim().match(/\b[\w'-]+\b/g)||[]).length; }
+function chip(ta, chipId) {
+  document.getElementById(chipId).textContent = wordCount(ta.value) + ' w';
+  refreshTotals();
+}
+function refreshTotals() {
+  const combined = ['answer11','answer12','answer2'].map(id=>document.getElementById(id).value).join('\n\n');
+  const st = stats(combined);
+  document.getElementById('wcAll').textContent = st.w;
+  document.getElementById('scAll').textContent = st.s;
+  document.getElementById('pcAll').textContent = st.p;
+}
+
+/* ══════════════════════════ TEXT STATS ══════════════════════════════════ */
+function stats(text) {
+  const t = text.trim();
+  if (!t) return {w:0,s:0,p:0,avg:0};
+  const w = (t.match(/\b[\w'-]+\b/g)||[]).length;
+  const s = Math.max(1,(t.match(/[.!?]+/g)||[]).length);
+  const p = t.split(/\n\s*\n/).filter(x=>x.trim()).length||1;
+  return {w,s,p,avg:w/s};
+}
+function n(text,re) { return (text.match(re)||[]).length; }
+function stance(t) { return /(i (strongly )?(agree|disagree|believe|think)|in my opinion|from my point of view|personally)/i.test(t); }
+
+/* ══════════════════════════ ANALYSIS ════════════════════════════════════ */
+function analyze(text, type) {
+  const st = stats(text);
+  if (!st.w) return {band:0,label:'No attempt',fb:['No writing submitted.'],st};
+  const lo = text.toLowerCase();
+  let score = 0;
+  if (type==='1.1') { if(st.w>=60)score+=1; if(st.w>=110)score+=1; if(st.p>=1)score+=.5; }
+  else if (type==='1.2') { if(st.w>=90)score+=1; if(st.w>=150)score+=1; if(st.p>=2)score+=.5; }
+  else { if(st.w>=180)score+=1; if(st.w>=250)score+=1; if(st.p>=3)score+=.75; if(stance(text))score+=.5; }
+
+  const lk = n(lo,/\b(because|however|although|therefore|moreover|in addition|firstly|secondly|for example|on the other hand|as a result|to conclude|in conclusion|while|whereas|since)\b/g);
+  const cx = n(lo,/\b(which|who|whom|whose|that|if|unless|despite|although|whereas|while|not only|in order to|so that|even though)\b/g);
+  score += Math.min(1.5,lk*.15) + Math.min(1.25,cx*.12);
+  if (st.avg>=12) score+=.5;
+
+  const ww = (lo.match(/\b[a-z][a-z'-]*\b/g)||[]);
+  const lr = ww.length ? new Set(ww).size/ww.length : 0;
+  if (lr>.45) score+=.75; else if(lr>.35) score+=.4;
+
+  const rp=n(text,/[!?.,]{3,}/g), li=n(text,/\bi\b/g);
+  score -= rp*.2 + li*.05;
+  if(st.s<2&&st.w>35)score-=.7;
+  if(st.avg<6)score-=.4;
+
+  let band=1;
+  if(type==='1.1'){
+    if(score>=5.2)band=5; else if(score>=4.2)band=4; else if(score>=3.1)band=3; else if(score>=1.8)band=2;
+  } else {
+    if(score>=5.7)band=6; else if(score>=4.9)band=5; else if(score>=4.0)band=4; else if(score>=3.1)band=3; else if(score>=2.0)band=2;
+  }
+  const L11=['—','A1 or lower','A2','Lower B1','Higher B1','B2+'];
+  const Lhi=['—','A2','B1','Lower B2','Higher B2','C1','C2'];
+  const label = type==='1.1' ? L11[band] : Lhi[band];
+
+  const fb=[];
+  fb.push(`${st.w} words · ${st.s} sentences · ${st.p} paragraph${st.p>1?'s':''}`);
+  const mw=type==='2'?180:type==='1.2'?90:60;
+  if(st.w<mw)         fb.push(`Too short — aim for at least ${mw} words.`);
+  if(lk<(type==='2'?4:2)) fb.push('Add more linking words (however, therefore, moreover…).');
+  if(cx<(type==='2'?3:2)) fb.push('Use more complex grammar: relative clauses, conditionals, adverbial clauses.');
+  if(type==='2'&&!stance(text)) fb.push('State your position clearly at the beginning.');
+  const mp=type==='2'?3:type==='1.2'?2:1;
+  if(st.p<mp)         fb.push(`Improve paragraphing — aim for at least ${mp}.`);
+  if(lr<.35)          fb.push('Avoid repeating words — vary your vocabulary.');
+  if(li>0)            fb.push('Always capitalise "I" in English.');
+  if(rp>0)            fb.push('Remove repeated punctuation (!!!, ???).');
+  if(fb.length<=2)    fb.push('Good control shown. Keep refining cohesion and grammar range.');
+  return {band,label,score,fb,st};
+}
+
+/* ════════════════════ CONVERSION TABLE ══════════════════════════════════ */
+const CT=[[17,75],[16.5,74],[16,72],[15.5,69],[15,67],[14.5,65],[14,63],[13.5,62],[13,61],[12.5,59],[12,57],[11.5,56],[11,54],[10.5,53],[10,51],[9.5,50],[9,49],[8.5,47],[8,45],[7.5,43],[7,42],[6.5,40],[6,38],[5.5,35],[5,32],[4.5,29],[4,26],[3.5,23],[3,21],[2.5,18],[2,15],[1.5,13],[1,11],[0.5,10],[0,0]];
+function toStd(e){return CT.reduce((b,r)=>Math.abs(e-r[0])<Math.abs(e-b[0])?r:b)[1];}
+
+/* ════════════════════ GRAMMAR PATTERNS ═════════════════════════════════ */
+const GR=[
+  {re:/\bi\b/g,              msg:'Lowercase "i" — should be "I"'},
+  {re:/\b(dont|cant|wont|isnt|wasnt|arent|werent|didnt|doesnt)\b/gi, msg:'Missing apostrophe in contraction'},
+  {re:/[!?.,]{3,}/g,         msg:'Repeated punctuation'},
+  {re:/\b(\w+)\s+\1\b/gi,   msg:'Repeated word'},
+  {re:/\ba\s+[aeiou]/gi,     msg:'Should be "an" before a vowel sound'},
+  {re:/\bmore\s+\w+er\b/gi,  msg:'Double comparative (more + -er)'},
+  {re:/\bvery\s+unique\b/gi, msg:'"Unique" is absolute — drop "very"'},
+  {re:/\b(he|she|it)\s+(do|have)\b/gi, msg:'Subject–verb agreement issue'},
+];
+function renderGrammar() {
+  const id   = document.getElementById('grammarSel').value;
+  const text = document.getElementById(id).value;
+  if (!text.trim()) {
+    document.getElementById('grammarMarked').textContent = '(No text in this section.)';
+    document.getElementById('grammarList').innerHTML = '<li>Nothing to analyse.</li>';
+    return;
+  }
+  const issues=[]; let marked=text;
+  GR.forEach(({re,msg})=>{
+    const hits=text.match(re);
+    if(hits){hits.forEach(h=>issues.push(`"${h}" — ${msg}`)); marked=marked.replace(re,m=>`<mark class="g-err">${m}</mark>`);}
+  });
+  document.getElementById('grammarMarked').innerHTML=marked;
+  document.getElementById('grammarList').innerHTML=issues.length
+    ?issues.map(i=>`<li>${i}</li>`).join('')
+    :'<li style="color:var(--mint)">✓ No obvious issues detected.</li>';
+}
+
+/* ════════════════════════ CHECK ALL ═════════════════════════════════════ */
+function pop(id){const el=document.getElementById(id);el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),450);}
+
+function checkAll() {
+  const a11=document.getElementById('answer11').value;
+  const a12=document.getElementById('answer12').value;
+  const a2 =document.getElementById('answer2').value;
+  const r11=analyze(a11,'1.1'), r12=analyze(a12,'1.2'), r2=analyze(a2,'2');
+  const expert=r11.band+r12.band+r2.band, standard=toStd(expert);
+
+  document.getElementById('band11').textContent=r11.band||'0'; pop('band11');
+  document.getElementById('band12').textContent=r12.band||'0'; pop('band12');
+  document.getElementById('band2').textContent =r2.band ||'0'; pop('band2');
+  document.getElementById('meta11').textContent=r11.label||'No attempt';
+  document.getElementById('meta12').textContent=r12.label||'No attempt';
+  document.getElementById('meta2').textContent =r2.label ||'No attempt';
+  document.getElementById('stdScore').textContent=standard; pop('stdScore');
+  document.getElementById('expertMark').textContent=expert.toFixed(1);
+  refreshTotals();
+
+  // Render feedback
+  const box=document.getElementById('feedbackBox'); box.innerHTML='';
+  [[r11,'Writing 1.1','ttag-a'],[r12,'Writing 1.2','ttag-b'],[r2,'Task 2','ttag-c']].forEach(([r,title,cls])=>{
+    const sec=document.createElement('div'); sec.className='fb-sec';
+    const head=document.createElement('div'); head.className='fb-head';
+    head.innerHTML=`<span class="ttag ${cls}">${title}</span><span class="fb-band">Band ${r.band}</span><span class="fb-title">${r.label||'No attempt'}</span>`;
+    sec.appendChild(head);
+    r.fb.forEach(f=>{
+      const pt=document.createElement('div'); pt.className='fb-pt';
+      pt.innerHTML=`<i class="fas fa-angle-right"></i><span>${f}</span>`; sec.appendChild(pt);
+    });
+    box.appendChild(sec);
+  });
+  const ov=document.createElement('div'); ov.className='fb-overall';
+  ov.innerHTML=`
+    <div class="fb-pt"><i class="fas fa-angle-right"></i><span>Expert mark: <span class="fb-highlight">${expert.toFixed(1)} / 17</span></span></div>
+    <div class="fb-pt"><i class="fas fa-angle-right"></i><span>Standard score: <span class="fb-highlight" style="color:var(--gold)">${standard} / 75</span></span></div>
+    <div class="fb-pt" style="color:var(--text4)"><i class="fas fa-angle-right"></i><span>Automated estimate — verify with the official rubric before finalising marks.</span></div>`;
+  box.appendChild(ov);
+  renderGrammar();
+}
+
+/* ════════════════════════ CLEAR ALL ═════════════════════════════════════ */
+function clearAll() {
+  if(!confirm('Clear all answers and reset results?'))return;
+  ['studentName','examDate','teacherName','prompt11','answer11','prompt12','answer12','prompt2','answer2']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['wc11','wc12','wct2'].forEach(id=>document.getElementById(id).textContent='0 w');
+  document.getElementById('feedbackBox').innerHTML='<p class="fb-empty">Press <strong style="color:var(--sky-light)">Check &amp; Score</strong> to generate per-section feedback.</p>';
+  ['stdScore','expertMark'].forEach(id=>document.getElementById(id).textContent='—');
+  ['band11','band12','band2'].forEach(id=>document.getElementById(id).textContent='—');
+  ['meta11','meta12','meta2'].forEach(id=>document.getElementById(id).textContent='No analysis yet');
+  ['wcAll','scAll','pcAll'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('grammarMarked').textContent='Highlighted issues appear here after checking.';
+  document.getElementById('grammarList').innerHTML='<li>Press Check &amp; Score to analyse grammar.</li>';
+  resetTimer();
+}
+</script>
+{% endblock %}

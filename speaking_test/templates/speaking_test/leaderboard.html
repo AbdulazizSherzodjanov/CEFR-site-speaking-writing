@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.lb-page { padding:2.5rem 0 5rem; }
+
+.lb-hero { text-align:center; margin-bottom:2.5rem; }
+.lb-hero h1 { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; margin:.4rem 0 .3rem; }
+.lb-hero p  { color:var(--text3); font-size:.9rem; }
+
+.my-rank-strip {
+  background:var(--sky-glow); border:1px solid rgba(255,92,26,.3);
+  border-radius:14px; padding:.85rem 1.4rem; margin-bottom:1.8rem;
+  display:flex; align-items:center; gap:1rem;
+}
+.my-rank-num { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--sky-light); line-height:1; }
+.my-rank-lbl { font-size:.84rem; color:var(--text3); }
+
+.lb-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+
+.lb-panel { background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:1.5rem; }
+.lb-panel-title {
+  font-family:'Syne',sans-serif; font-size:1rem; font-weight:700;
+  margin-bottom:1.4rem; display:flex; align-items:center; gap:.5rem;
+  padding-bottom:.8rem; border-bottom:1px solid var(--border);
+}
+
+.podium { display:flex; justify-content:center; align-items:flex-end; gap:.7rem; margin-bottom:1.5rem; }
+.pdm-item { text-align:center; display:flex; flex-direction:column; align-items:center; }
+.pdm-crown { font-size:1.3rem; margin-bottom:.2rem; }
+.pdm-av {
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; color:#fff; margin:0 auto .4rem;
+}
+.pdm-av.gold   { width:66px;height:66px;font-size:1.3rem; background:linear-gradient(135deg,#ffd700,#ff9500); box-shadow:0 0 22px rgba(255,180,0,.35); }
+.pdm-av.silver { width:54px;height:54px;font-size:1.1rem; background:linear-gradient(135deg,#c0c0c0,#888); }
+.pdm-av.bronze { width:46px;height:46px;font-size:.95rem; background:linear-gradient(135deg,#cd7f32,#a05020); }
+.pdm-name  { font-size:.8rem; font-weight:600; color:var(--text2); max-width:68px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pdm-score { font-family:'Syne',sans-serif; font-size:.9rem; font-weight:800; color:var(--sky-light); }
+.pdm-meta  { font-size:.7rem; color:var(--text4); }
+
+.lb-row {
+  display:flex; align-items:center; gap:.8rem;
+  padding:.6rem .4rem; border-radius:10px; transition:background .15s;
+}
+.lb-row:hover { background:var(--bg4); }
+.lb-row.is-me { background:var(--sky-glow); border:1px solid rgba(255,92,26,.2); border-radius:10px; }
+
+.lb-num { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:800; min-width:28px; text-align:center; color:var(--text4); }
+.lb-num.g { color:#ffd700; } .lb-num.s { color:#b0b0b0; } .lb-num.b { color:#cd7f32; }
+
+.lb-av {
+  width:34px;height:34px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.76rem;color:#fff;
+}
+.lb-info { flex:1; min-width:0; }
+.lb-name { font-weight:600; font-size:.87rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-meta { font-size:.73rem; color:var(--text3); }
+
+.lb-val {
+  font-family:'Syne',sans-serif; font-weight:800; font-size:.95rem;
+  padding:.18rem .58rem; border-radius:7px; background:var(--bg4);
+  border:1px solid var(--border2); flex-shrink:0;
+}
+.lb-val.hi { background:rgba(0,212,170,.1); color:var(--mint); border-color:rgba(0,212,170,.2); }
+.lb-val.md { background:var(--sky-glow); color:var(--sky-light); border-color:rgba(255,92,26,.2); }
+.lb-val.lo { background:rgba(245,166,35,.1); color:var(--gold); border-color:rgba(245,166,35,.2); }
+
+.lb-empty { text-align:center; padding:2.5rem 1rem; color:var(--text4); }
+.lb-empty .ico { font-size:2.5rem; margin-bottom:.6rem; }
+
+@media(max-width:720px){ .lb-grid{grid-template-columns:1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container lb-page">
+
+  <div class="lb-hero">
+    <span class="badge badge-gold">🏆 Rankings</span>
+    <h1>Leaderboard</h1>
+    <p>Top students by average score and daily streak. Keep practising to climb higher!</p>
+  </div>
+
+  {% if my_rank %}
+  <div class="my-rank-strip">
+    <div class="my-rank-num">#{{ my_rank }}</div>
+    <div>
+      <div style="font-weight:600;color:var(--text)">Your rank by average score</div>
+      <div class="my-rank-lbl">Complete more tests to improve your position.</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="lb-grid">
+
+    <!-- Score board -->
+    <div class="lb-panel">
+      <div class="lb-panel-title"><i class="fas fa-star text-gold"></i> Best Average Score</div>
+
+      {% if top_score %}
+        <div class="podium">
+          {% for e in top_score|slice:":3" %}
+            {% if forloop.counter == 2 %}
+            <div class="pdm-item">
+              <div class="pdm-av silver">{{ e.student__first_name|first|upper }}{{ e.student__last_name|first|upper }}</div>
+              <div class="pdm-name">{{ e.student__first_name }}</div>
+              <div class="pdm-score">{{ e.avg|floatformat:1 }}</div>
+              <div class="pdm-meta">{{ e.tests }}t</div>
+            </div>
+            {% elif forloop.counter == 1 %}
+            <div class="pdm-item">
+              <div class="pdm-crown">👑</div>
+              <div class="pdm-av gold">{{ e.student__first_name|first|upper }}{{ e.student__last_name|first|upper }}</div>
+              <div class="pdm-name">{{ e.student__first_name }}</div>
+              <div class="pdm-score">{{ e.avg|floatformat:1 }}</div>
+              <div class="pdm-meta">{{ e.tests }}t</div>
+            </div>
+            {% else %}
+            <div class="pdm-item">
+              <div class="pdm-av bronze">{{ e.student__first_name|first|upper }}{{ e.student__last_name|first|upper }}</div>
+              <div class="pdm-name">{{ e.student__first_name }}</div>
+              <div class="pdm-score">{{ e.avg|floatformat:1 }}</div>
+              <div class="pdm-meta">{{ e.tests }}t</div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% for e in top_score %}{% if forloop.counter > 3 %}
+        <div class="lb-row {% if request.user.id == e.student__id %}is-me{% endif %}">
+          <div class="lb-num">{{ forloop.counter }}</div>
+          <div class="lb-av">{{ e.student__first_name|first|upper }}{{ e.student__last_name|first|upper }}</div>
+          <div class="lb-info">
+            <div class="lb-name">{{ e.student__first_name }} {{ e.student__last_name }}</div>
+            <div class="lb-meta">{{ e.tests }} test{{ e.tests|pluralize }}</div>
+          </div>
+          <div class="lb-val {% if e.avg >= 4 %}hi{% elif e.avg >= 3 %}md{% else %}lo{% endif %}">{{ e.avg|floatformat:1 }}</div>
+        </div>
+        {% endif %}{% endfor %}
+
+      {% else %}
+        <div class="lb-empty"><div class="ico">📊</div><p>No results yet — complete a test to appear here!</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Streak board -->
+    <div class="lb-panel">
+      <div class="lb-panel-title"><i class="fas fa-fire text-coral"></i> Longest Streak</div>
+
+      {% for sp in top_streak %}
+      <div class="lb-row {% if request.user == sp.user %}is-me{% endif %}">
+        <div class="lb-num {% if forloop.counter == 1 %}g{% elif forloop.counter == 2 %}s{% elif forloop.counter == 3 %}b{% endif %}">{{ forloop.counter }}</div>
+        <div class="lb-av">{{ sp.user.first_name|first|upper }}{{ sp.user.last_name|first|upper }}</div>
+        <div class="lb-info">
+          <div class="lb-name">{{ sp.user.get_full_name|default:sp.user.username }}</div>
+          <div class="lb-meta">{% if sp.teacher %}{{ sp.teacher.name }}{% else %}Independent{% endif %}</div>
+        </div>
+        <div class="lb-val hi">🔥 {{ sp.streak }}</div>
+      </div>
+      {% empty %}
+        <div class="lb-empty"><div class="ico">🔥</div><p>No streaks yet — practice daily to build yours!</p></div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

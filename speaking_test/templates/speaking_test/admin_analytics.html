@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+.an-page { padding:2rem 0 5rem; }
+
+.an-header { margin-bottom:2rem; }
+.an-header h1 { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; margin:.35rem 0 .2rem; }
+.an-header p  { color:var(--text3); font-size:.88rem; }
+
+/* kpi tiles */
+.kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:.9rem; margin-bottom:2rem; }
+.kpi { background:var(--bg3); border:1px solid var(--border); border-radius:15px; padding:1.1rem 1.2rem; position:relative; overflow:hidden; }
+.kpi::after { content:''; position:absolute; bottom:0;left:0;right:0;height:2px; }
+.kpi:nth-child(1)::after { background:linear-gradient(to right,var(--sky-light),transparent); }
+.kpi:nth-child(2)::after { background:linear-gradient(to right,var(--mint),transparent); }
+.kpi:nth-child(3)::after { background:linear-gradient(to right,var(--gold),transparent); }
+.kpi:nth-child(4)::after { background:linear-gradient(to right,var(--coral),transparent); }
+.kpi:nth-child(5)::after { background:linear-gradient(to right,#a78bfa,transparent); }
+.kpi:nth-child(6)::after { background:linear-gradient(to right,var(--sky),transparent); }
+.kpi-lbl { font-size:.69rem; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.3rem; }
+.kpi-val { font-family:'Syne',sans-serif; font-size:1.9rem; font-weight:800; line-height:1; }
+.kpi:nth-child(1) .kpi-val { color:var(--sky-light); }
+.kpi:nth-child(2) .kpi-val { color:var(--mint); }
+.kpi:nth-child(3) .kpi-val { color:var(--gold); }
+.kpi:nth-child(4) .kpi-val { color:var(--coral); }
+.kpi:nth-child(5) .kpi-val { color:#a78bfa; }
+.kpi:nth-child(6) .kpi-val { color:var(--sky-light); }
+.kpi-sub { font-size:.73rem; color:var(--text4); margin-top:.25rem; }
+
+/* charts row */
+.charts-row { display:grid; grid-template-columns:1.6fr 1fr; gap:1.2rem; margin-bottom:1.5rem; }
+.an-card { background:var(--bg3); border:1px solid var(--border); border-radius:18px; padding:1.4rem; }
+.an-card-title { font-family:'Syne',sans-serif; font-size:.9rem; font-weight:700; margin-bottom:1.2rem; display:flex; align-items:center; gap:.5rem; color:var(--text2); padding-bottom:.8rem; border-bottom:1px solid var(--border); }
+
+/* part bars */
+.pt-bar-row { margin-bottom:.9rem; }
+.pt-bar-head { display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.35rem; }
+.pt-bar-name { color:var(--text2); font-weight:600; }
+.pt-bar-val  { font-family:'Syne',sans-serif; font-weight:700; color:var(--sky-light); }
+.pt-bar-track { height:7px; background:var(--bg4); border-radius:4px; overflow:hidden; }
+.pt-bar-fill  { height:100%; border-radius:4px; background:linear-gradient(to right,var(--sky),var(--mint)); }
+
+/* bottom grid */
+.bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+
+/* top teachers */
+.teacher-row { display:flex; align-items:center; gap:.8rem; padding:.6rem .4rem; border-radius:9px; transition:background .15s; }
+.teacher-row:hover { background:var(--bg4); }
+.t-rank { font-family:'Syne',sans-serif; font-size:.85rem; font-weight:800; min-width:26px; text-align:center; color:var(--text4); }
+.t-icon { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange2));display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0; }
+.t-name { flex:1; font-size:.87rem; font-weight:600; }
+.t-cnt  { font-family:'Syne',sans-serif; font-size:.9rem; font-weight:800; color:var(--sky-light); }
+
+/* recent students */
+.rs-row { display:flex; align-items:center; gap:.8rem; padding:.55rem .4rem; border-radius:9px; transition:background .15s; }
+.rs-row:hover { background:var(--bg4); }
+.rs-av { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:#fff;flex-shrink:0; }
+.rs-info { flex:1; min-width:0; }
+.rs-name { font-size:.86rem; font-weight:600; white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.rs-meta { font-size:.73rem; color:var(--text3); }
+.rs-date { font-size:.76rem; color:var(--text4); flex-shrink:0; }
+
+@media(max-width:1100px){ .kpi-row{grid-template-columns:repeat(3,1fr)}; .charts-row{grid-template-columns:1fr} }
+@media(max-width:700px) { .kpi-row{grid-template-columns:1fr 1fr}; .bottom-row{grid-template-columns:1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container an-page">
+
+  <div class="an-header">
+    <span class="badge badge-coral"><i class="fas fa-chart-bar"></i> Admin Only</span>
+    <h1>Platform Analytics</h1>
+    <p>Site-wide usage data, score trends, and student registration for the last 30 days.</p>
+  </div>
+
+  <!-- KPI tiles -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-lbl">Total Students</div>
+      <div class="kpi-val">{{ total_students }}</div>
+      <div class="kpi-sub">registered center students</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Center Sessions</div>
+      <div class="kpi-val">{{ total_center }}</div>
+      <div class="kpi-sub">completed by students</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Outsider Sessions</div>
+      <div class="kpi-val">{{ total_outsiders }}</div>
+      <div class="kpi-sub">external candidates</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Total Sessions</div>
+      <div class="kpi-val">{{ total_sessions }}</div>
+      <div class="kpi-sub">all completed tests</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Avg Score</div>
+      <div class="kpi-val">{% if overall_avg %}{{ overall_avg }}{% else %}—{% endif %}</div>
+      <div class="kpi-sub">platform-wide average</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Active Teachers</div>
+      <div class="kpi-val">{{ total_teachers }}</div>
+      <div class="kpi-sub">with students assigned</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <!-- Daily sessions chart -->
+    <div class="an-card">
+      <div class="an-card-title"><i class="fas fa-chart-line text-mint"></i> Daily Sessions (last 30 days)</div>
+      {% if daily_labels %}
+        <canvas id="dailyChart" height="140"></canvas>
+      {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--text4)">No session data for the past 30 days.</div>
+      {% endif %}
+    </div>
+
+    <!-- Per-part breakdown -->
+    <div class="an-card">
+      <div class="an-card-title"><i class="fas fa-sliders-h text-sky"></i> Avg Score by Part</div>
+      {% for p in part_breakdown %}
+      {% if p.avg %}
+      <div class="pt-bar-row">
+        <div class="pt-bar-head">
+          <span class="pt-bar-name">Part {{ p.part }}</span>
+          <span class="pt-bar-val">{{ p.avg|floatformat:1 }} <span style="font-size:.74rem;color:var(--text4)">({{ p.cnt }} sessions)</span></span>
+        </div>
+        <div class="pt-bar-track">
+          <div class="pt-bar-fill" style="width:{% widthratio p.avg 6 100 %}%"></div>
+        </div>
+      </div>
+      {% endif %}
+      {% empty %}
+        <div style="text-align:center;padding:2rem;color:var(--text4)">No data yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="bottom-row">
+
+    <!-- Top teachers -->
+    <div class="an-card">
+      <div class="an-card-title"><i class="fas fa-chalkboard-teacher text-gold"></i> Top Teachers by Student Count</div>
+      {% for t in top_teachers %}
+      <div class="teacher-row">
+        <div class="t-rank">{{ forloop.counter }}</div>
+        <div class="t-icon">🎓</div>
+        <div class="t-name">{{ t.teacher__name }}</div>
+        <div class="t-cnt">{{ t.cnt }} student{{ t.cnt|pluralize }}</div>
+      </div>
+      {% empty %}
+        <div style="text-align:center;padding:1.5rem;color:var(--text4)">No teachers with students yet.</div>
+      {% endfor %}
+    </div>
+
+    <!-- Recent registrations -->
+    <div class="an-card">
+      <div class="an-card-title"><i class="fas fa-user-plus text-sky"></i> Recent Registrations (14 days)</div>
+      {% for sp in recent_students %}
+      <div class="rs-row">
+        <div class="rs-av">{{ sp.user.first_name|first|upper }}{{ sp.user.last_name|first|upper }}</div>
+        <div class="rs-info">
+          <div class="rs-name">{{ sp.user.get_full_name|default:sp.user.username }}</div>
+          <div class="rs-meta">{% if sp.teacher %}{{ sp.teacher.name }}{% else %}No teacher{% endif %}</div>
+        </div>
+        <div class="rs-date">{{ sp.created_at|date:"d M" }}</div>
+      </div>
+      {% empty %}
+        <div style="text-align:center;padding:1.5rem;color:var(--text4)">No new students in the last 14 days.</div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if daily_labels %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const dailyLabels = {{ daily_labels|safe }};
+const dailyCounts = {{ daily_counts|safe }};
+const dailyAvgs   = {{ daily_avgs|safe }};
+const isDark = true;
+const grid    = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const textC   = isDark ? '#7777aa' : '#7777aa';
+
+new Chart(document.getElementById('dailyChart'), {
+  type: 'bar',
+  data: {
+    labels: dailyLabels,
+    datasets: [
+      {
+        label: 'Sessions',
+        data: dailyCounts,
+        backgroundColor: 'rgba(255,92,26,.45)',
+        borderColor: 'rgba(255,92,26,.9)',
+        borderWidth: 1,
+        borderRadius: 5,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Avg Score',
+        data: dailyAvgs,
+        type: 'line',
+        borderColor: '#FF5C1A',
+        backgroundColor: 'rgba(0,212,170,.07)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        tension: .4,
+        fill: true,
+        yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { color: textC, font: { size: 11 } } } },
+    scales: {
+      x:  { grid: { color: grid }, ticks: { color: textC, maxRotation: 45, font: { size: 9 } } },
+      y:  { grid: { color: grid }, ticks: { color: textC }, title: { display: true, text: 'Sessions', color: textC } },
+      y2: { position: 'right', min: 0, max: 6, grid: { drawOnChartArea: false }, ticks: { color: textC }, title: { display: true, text: 'Avg Score', color: textC } }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+.tp-page { padding:2rem 0 5rem; }
+
+.tp-header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:2rem; }
+.tp-header h1 { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; margin:.35rem 0 .2rem; }
+.tp-header p { color:var(--text3); font-size:.88rem; }
+
+/* summary tiles */
+.tp-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+.tp-tile { background:var(--bg3); border:1px solid var(--border); border-radius:16px; padding:1.2rem 1.3rem; position:relative; overflow:hidden; }
+.tp-tile::after { content:''; position:absolute; bottom:0;left:0;right:0;height:2px; }
+.tp-t1::after { background:linear-gradient(to right,var(--sky-light),transparent); }
+.tp-t2::after { background:linear-gradient(to right,var(--mint),transparent); }
+.tp-t3::after { background:linear-gradient(to right,var(--gold),transparent); }
+.tp-t4::after { background:linear-gradient(to right,var(--coral),transparent); }
+.tp-tile-lbl { font-size:.72rem; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.35rem; }
+.tp-tile-val { font-family:'Syne',sans-serif; font-size:2.1rem; font-weight:800; line-height:1; }
+.tp-t1 .tp-tile-val { color:var(--sky-light); }
+.tp-t2 .tp-tile-val { color:var(--mint); }
+.tp-t3 .tp-tile-val { color:var(--gold); }
+.tp-t4 .tp-tile-val { color:var(--coral); }
+
+/* filter bar */
+.tp-filters {
+  background:var(--bg3); border:1px solid var(--border); border-radius:14px;
+  padding:1rem 1.2rem; margin-bottom:1.5rem;
+  display:flex; gap:.8rem; align-items:center; flex-wrap:wrap;
+}
+.tp-filters input, .tp-filters select {
+  background:var(--bg4); border:1px solid var(--border2); color:var(--text);
+  padding:.5rem .9rem; border-radius:9px; font-family:'DM Sans',sans-serif;
+  font-size:.88rem; outline:none; transition:border-color .2s;
+}
+.tp-filters input:focus, .tp-filters select:focus { border-color:var(--sky); }
+.tp-filters input { flex:1; min-width:160px; }
+.tp-filters select option { background:var(--bg3); }
+
+/* main grid */
+.tp-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:1.5rem; }
+
+/* student list */
+.tp-panel { background:var(--bg3); border:1px solid var(--border); border-radius:18px; padding:1.4rem; }
+.tp-panel-title { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:700; margin-bottom:1.2rem; display:flex; align-items:center; gap:.5rem; padding-bottom:.8rem; border-bottom:1px solid var(--border); }
+
+.stu-row {
+  display:flex; align-items:center; gap:.85rem;
+  padding:.7rem .5rem; border-radius:10px; transition:background .15s;
+}
+.stu-row:hover { background:var(--bg4); }
+.stu-av {
+  width:38px; height:38px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:.8rem; color:#fff;
+}
+.stu-info { flex:1; min-width:0; }
+.stu-name { font-weight:600; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stu-meta { font-size:.74rem; color:var(--text3); }
+.stu-stats { display:flex; gap:.5rem; flex-shrink:0; align-items:center; }
+.stu-score {
+  font-family:'Syne',sans-serif; font-weight:800; font-size:.9rem;
+  padding:.15rem .5rem; border-radius:6px; background:var(--bg4); border:1px solid var(--border2);
+}
+.stu-score.hi { background:rgba(0,212,170,.1); color:var(--mint); border-color:rgba(0,212,170,.2); }
+.stu-score.md { background:var(--sky-glow); color:var(--sky-light); border-color:rgba(255,92,26,.2); }
+.stu-score.lo { background:rgba(245,166,35,.1); color:var(--gold); border-color:rgba(245,166,35,.2); }
+.stu-streak { font-size:.78rem; color:var(--coral); }
+
+/* sessions table */
+.sess-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+.sess-table th { text-align:left; font-size:.71rem; text-transform:uppercase; letter-spacing:.07em; color:var(--text3); padding:.5rem .6rem; border-bottom:1px solid var(--border); }
+.sess-table td { padding:.65rem .6rem; border-bottom:1px solid var(--border); color:var(--text2); }
+.sess-table tr:last-child td { border-bottom:none; }
+.sess-table tr:hover td { background:var(--bg4); }
+
+.part-tag { display:inline-block; font-size:.7rem; font-weight:700; padding:.15rem .5rem; border-radius:5px; text-transform:uppercase; }
+.pt-11   { background:rgba(255,92,26,.14);color:var(--sky-light); }
+.pt-12   { background:rgba(0,212,170,.1);  color:var(--mint); }
+.pt-2    { background:rgba(245,166,35,.1); color:var(--gold); }
+.pt-3    { background:rgba(255,107,107,.1);color:var(--coral); }
+.pt-full { background:var(--sky-glow);     color:var(--sky-light); }
+
+/* part breakdown bars */
+.pb-row { margin-bottom:.85rem; }
+.pb-labels { display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.35rem; }
+.pb-name { color:var(--text2); font-weight:600; }
+.pb-val  { font-family:'Syne',sans-serif; font-weight:700; color:var(--sky-light); }
+.pb-track { height:7px; background:var(--bg4); border-radius:4px; overflow:hidden; }
+.pb-fill  { height:100%; border-radius:4px; background:linear-gradient(to right,var(--sky),var(--mint)); }
+
+.tp-empty { text-align:center; padding:2rem 1rem; color:var(--text4); }
+.tp-empty .ico { font-size:2.2rem; margin-bottom:.5rem; }
+
+@media(max-width:900px){ .tp-grid{grid-template-columns:1fr}; .tp-tiles{grid-template-columns:1fr 1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container tp-page">
+
+  <div class="tp-header">
+    <div>
+      <span class="badge badge-mint"><i class="fas fa-chalkboard-teacher"></i> Teacher Panel</span>
+      <h1>{% if teacher %}{{ teacher.name }}'s Panel{% else %}Teacher Panel{% endif %}</h1>
+      <p>Overview of your students' performance and recent test sessions.</p>
+    </div>
+  </div>
+
+  <!-- Summary tiles -->
+  <div class="tp-tiles">
+    <div class="tp-tile tp-t1">
+      <div class="tp-tile-lbl">Students</div>
+      <div class="tp-tile-val">{{ student_count }}</div>
+    </div>
+    <div class="tp-tile tp-t2">
+      <div class="tp-tile-lbl">Total Sessions</div>
+      <div class="tp-tile-val">{{ total_sessions }}</div>
+    </div>
+    <div class="tp-tile tp-t3">
+      <div class="tp-tile-lbl">Average Score</div>
+      <div class="tp-tile-val">{% if overall_avg %}{{ overall_avg }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="tp-tile tp-t4">
+      <div class="tp-tile-lbl">Parts Tested</div>
+      <div class="tp-tile-val">{{ part_breakdown|length }}</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="tp-filters">
+    <input type="text" name="q" value="{{ search }}" placeholder="🔍  Search student name…">
+    <select name="part">
+      <option value="">All parts</option>
+      <option value="1.1" {% if part_filter == '1.1' %}selected{% endif %}>Part 1.1</option>
+      <option value="1.2" {% if part_filter == '1.2' %}selected{% endif %}>Part 1.2</option>
+      <option value="2"   {% if part_filter == '2'   %}selected{% endif %}>Part 2</option>
+      <option value="3"   {% if part_filter == '3'   %}selected{% endif %}>Part 3</option>
+      <option value="full"{% if part_filter == 'full'%}selected{% endif %}>Full Test</option>
+    </select>
+    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+    {% if search or part_filter %}<a href="{% url 'teacher_panel' %}" class="btn btn-secondary">Clear</a>{% endif %}
+  </form>
+
+  <div class="tp-grid">
+
+    <!-- Left: students -->
+    <div class="tp-panel">
+      <div class="tp-panel-title"><i class="fas fa-users text-sky"></i> Students ({{ student_count }})</div>
+
+      {% if student_stats %}
+        {% for st in student_stats %}
+        <div class="stu-row">
+          <div class="stu-av">{{ st.profile.user.first_name|first|upper }}{{ st.profile.user.last_name|first|upper }}</div>
+          <div class="stu-info">
+            <div class="stu-name">{{ st.profile.user.get_full_name|default:st.profile.user.username }}</div>
+            <div class="stu-meta">{{ st.cnt }} test{{ st.cnt|pluralize }} · {% if st.last %}Last: {{ st.last|date:"d M" }}{% else %}No tests{% endif %}</div>
+          </div>
+          <div class="stu-stats">
+            {% if st.avg %}
+            <div class="stu-score {% if st.avg >= 4 %}hi{% elif st.avg >= 3 %}md{% else %}lo{% endif %}">{{ st.avg }}</div>
+            {% else %}
+            <div class="stu-score" style="color:var(--text4)">—</div>
+            {% endif %}
+            {% if st.streak > 0 %}<div class="stu-streak">🔥{{ st.streak }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+
+        <!-- part breakdown -->
+        {% if part_breakdown %}
+        <div style="margin-top:1.5rem; padding-top:1.2rem; border-top:1px solid var(--border)">
+          <div style="font-size:.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem">Avg score by part</div>
+          {% for p in part_breakdown %}
+          {% if p.avg %}
+          <div class="pb-row">
+            <div class="pb-labels">
+              <span class="pb-name">Part {{ p.part }}</span>
+              <span class="pb-val">{{ p.avg|floatformat:1 }} <span style="color:var(--text4);font-size:.75rem">({{ p.cnt }})</span></span>
+            </div>
+            <div class="pb-track">
+              <div class="pb-fill" style="width:{% widthratio p.avg 6 100 %}%"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      {% else %}
+        <div class="tp-empty"><div class="ico">👥</div><p>No students assigned to you yet.</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Right: sessions -->
+    <div class="tp-panel">
+      <div class="tp-panel-title"><i class="fas fa-clipboard-list text-gold"></i> Recent Sessions</div>
+      {% if sessions %}
+      <div style="overflow-x:auto">
+      <table class="sess-table">
+        <thead><tr>
+          <th>Student</th><th>Part</th><th>Score</th><th>Rating</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td style="font-weight:600">{{ s.full_name }}</td>
+            <td>
+              {% if s.part == '1.1' %}<span class="part-tag pt-11">1.1</span>
+              {% elif s.part == '1.2' %}<span class="part-tag pt-12">1.2</span>
+              {% elif s.part == '2'   %}<span class="part-tag pt-2">P2</span>
+              {% elif s.part == '3'   %}<span class="part-tag pt-3">P3</span>
+              {% else %}<span class="part-tag pt-full">Full</span>{% endif %}
+            </td>
+            <td>{% if s.total_score %}<span style="font-family:'Syne',sans-serif;font-weight:700;color:{% if s.total_score >= 4 %}var(--mint){% elif s.total_score >= 3 %}var(--sky-light){% else %}var(--gold){% endif %}">{{ s.total_score|floatformat:1 }}</span>{% else %}—{% endif %}</td>
+            <td>{% if s.rating_score %}<span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--gold)">{{ s.rating_score }}</span>{% else %}—{% endif %}</td>
+            <td style="color:var(--text3);font-size:.8rem">{{ s.started_at|date:"d M · H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% else %}
+        <div class="tp-empty"><div class="ico">📋</div><p>No sessions match your filter.</p></div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

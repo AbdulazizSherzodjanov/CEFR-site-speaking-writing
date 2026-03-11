@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block title %}Your Results{% endblock %}
+{% block extra_css %}
+<style>
+.results-page{padding:3rem 0 5rem;}
+/* Header */
+.results-hero{text-align:center;margin-bottom:3rem;padding:3rem 1.5rem;}
+.results-trophy{font-size:4rem;margin-bottom:1rem;animation:pop .6s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{0%{transform:scale(0) rotate(-10deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.results-title{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;margin-bottom:.5rem;}
+.results-meta{color:var(--text3);font-size:.9rem;}
+
+/* Score hero card */
+.score-hero{
+  max-width:700px;margin:0 auto 3rem;
+  background:var(--bg3);border:1px solid var(--border);border-radius:24px;
+  padding:2.5rem;text-align:center;position:relative;overflow:hidden;
+}
+.score-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0,var(--sky-glow),transparent 60%);pointer-events:none;}
+.total-score-num{
+  font-family:'Syne',sans-serif;font-size:6rem;font-weight:800;line-height:1;margin:.5rem 0;
+  background:linear-gradient(135deg,var(--sky-light),var(--mint));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  position:relative;
+}
+.score-sub{color:var(--text3);font-size:.88rem;position:relative;}
+.cefr-level-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:linear-gradient(135deg,var(--sky-glow),rgba(0,212,170,.08));
+  border:1px solid rgba(255,92,26,.3);
+  padding:.5rem 1.2rem;border-radius:20px;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--sky-light);
+  margin-top:1rem;position:relative;
+}
+/* Breakdown bars */
+.breakdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-top:1.8rem;position:relative;}
+.bd-item{background:var(--bg4);border-radius:12px;padding:.9rem .6rem;text-align:center;}
+.bd-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--sky-light);}
+.bd-name{font-size:.7rem;color:var(--text4);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;}
+.bd-bar-track{height:4px;background:var(--bg3);border-radius:2px;margin-top:.5rem;overflow:hidden;}
+.bd-bar-fill{height:100%;border-radius:2px;background:linear-gradient(to right,var(--sky),var(--mint));transition:width 1.2s cubic-bezier(.22,.61,.36,1);}
+
+/* Part section dividers for full test */
+.part-section{margin-bottom:2.5rem;}
+.part-section-title{
+  font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;
+  color:var(--text3);text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:1.2rem;padding-bottom:.6rem;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.5rem;
+}
+
+/* Response cards */
+.response-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:16px;
+  padding:1.6rem;margin-bottom:1rem;transition:border-color .2s;
+}
+.response-card:hover{border-color:rgba(255,92,26,.3);}
+.resp-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem;}
+.resp-qnum{font-size:.75rem;color:var(--text4);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;}
+.resp-question{font-weight:600;font-size:.97rem;line-height:1.5;}
+.score-chip{
+  min-width:56px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;flex-shrink:0;
+}
+.chip-high{background:rgba(0,212,170,.15);color:var(--mint);border:1px solid rgba(0,212,170,.3);}
+.chip-mid{background:var(--sky-glow);color:var(--sky-light);border:1px solid rgba(255,92,26,.3);}
+.chip-low{background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.2);}
+.chip-none{background:var(--bg4);color:var(--text4);border:1px solid var(--border);}
+
+.transcript-box{
+  background:var(--bg4);border-radius:10px;padding:.75rem 1rem;
+  font-size:.86rem;color:var(--text3);line-height:1.65;margin-bottom:.7rem;
+  font-style:italic;border-left:3px solid var(--border2);
+}
+.feedback-box{
+  background:linear-gradient(135deg,var(--sky-glow),transparent);
+  border:1px solid rgba(255,92,26,.2);
+  border-radius:10px;padding:.75rem 1rem;
+  font-size:.86rem;color:var(--text2);line-height:1.65;
+}
+.feedback-box i{color:var(--sky-light);margin-right:.4rem;}
+
+/* Mini score bars inside response */
+.mini-bars{display:flex;gap:.4rem;margin-top:.7rem;flex-wrap:wrap;}
+.mini-bar-item{display:flex;align-items:center;gap:.3rem;font-size:.74rem;color:var(--text4);
+  background:var(--bg4);padding:.2rem .5rem;border-radius:6px;}
+.mini-bar-item strong{color:var(--sky-light);font-size:.8rem;}
+
+/* Actions */
+.results-actions{display:flex;justify-content:center;gap:1rem;margin-top:3rem;flex-wrap:wrap;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container results-page">
+  <!-- Hero -->
+  <div class="results-hero">
+    <div class="results-trophy">
+      {% if session.total_score %}
+        {% if session.total_score >= 4.5 %}🏆{% elif session.total_score >= 3.5 %}🥈{% elif session.total_score >= 2.5 %}🥉{% else %}🎙️{% endif %}
+      {% else %}✅{% endif %}
+    </div>
+    <h1 class="results-title">Test Complete!</h1>
+    <p class="results-meta">
+      <strong>{{ session.full_name }}</strong> &nbsp;·&nbsp;
+      {% if session.part == 'full' %}Full Test{% else %}Part {{ session.part }}{% endif %}
+      &nbsp;·&nbsp; {{ session.started_at|date:"M d, Y" }}
+      {% if session.telegram_sent %}&nbsp;·&nbsp;<span class="text-mint"><i class="fab fa-telegram"></i> Sent to teacher</span>{% endif %}
+    </p>
+  </div>
+
+  <!-- Score Hero -->
+  <div class="score-hero">
+    <div class="badge badge-sky">
+      {% if session.part == 'full' %}🏆 Full Test{% else %}Part {{ session.part }}{% endif %}
+    </div>
+    <div class="total-score-num">
+      {% if session.total_score %}{{ session.total_score|floatformat:1 }}{% else %}—{% endif %}
+    </div>
+    <div class="score-sub">Raw score (average across all questions)</div>
+
+    {% if session.rating_score %}
+    <div style="margin:.8rem 0;">
+      <div style="font-size:.78rem;color:var(--text3);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.07em;">Official Rating Score</div>
+      <div style="font-family:'Syne',sans-serif;font-size:3.2rem;font-weight:800;color:var(--gold);">
+        {{ session.rating_score }}<span style="font-size:1.2rem;color:var(--text3)">/75</span>
+      </div>
+    </div>
+    {% endif %}
+    <div class="cefr-level-badge">
+      {% if session.total_score %}
+        {% if session.total_score >= 4.8 %}🎓 C1+
+        {% elif session.total_score >= 4.2 %}⭐ B2–C1
+        {% elif session.total_score >= 3.5 %}📗 B2
+        {% elif session.total_score >= 2.8 %}📘 B1
+        {% elif session.total_score >= 2.0 %}📙 A2
+        {% else %}📕 A1{% endif %}
+      {% else %}—{% endif %}
+      &nbsp;Estimated Level
+    </div>
+
+    {% if responses %}
+    {% with first=responses.first %}
+    {% if first.score_breakdown %}
+    <div class="breakdown-grid">
+      {% if first.score_breakdown.grammar is not None %}
+      <div class="bd-item"><div class="bd-val">{{ first.score_breakdown.grammar|floatformat:0 }}</div><div class="bd-name">Grammar</div><div class="bd-bar-track"><div class="bd-bar-fill" data-val="{{ first.score_breakdown.grammar|floatformat:0 }}"></div></div></div>
+      {% endif %}
+      {% if first.score_breakdown.vocabulary is not None %}
+      <div class="bd-item"><div class="bd-val">{{ first.score_breakdown.vocabulary|floatformat:0 }}</div><div class="bd-name">Vocabulary</div><div class="bd-bar-track"><div class="bd-bar-fill" data-val="{{ first.score_breakdown.vocabulary|floatformat:0 }}"></div></div></div>
+      {% endif %}
+      {% if first.score_breakdown.pronunciation is not None %}
+      <div class="bd-item"><div class="bd-val">{{ first.score_breakdown.pronunciation|floatformat:0 }}</div><div class="bd-name">Pronunciation</div><div class="bd-bar-track"><div class="bd-bar-fill" data-val="{{ first.score_breakdown.pronunciation|floatformat:0 }}"></div></div></div>
+      {% endif %}
+      {% if first.score_breakdown.fluency is not None %}
+      <div class="bd-item"><div class="bd-val">{{ first.score_breakdown.fluency|floatformat:0 }}</div><div class="bd-name">Fluency</div><div class="bd-bar-track"><div class="bd-bar-fill" data-val="{{ first.score_breakdown.fluency|floatformat:0 }}"></div></div></div>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endif %}
+  </div>
+
+  <!-- Per-question results -->
+  <div style="max-width:800px;margin:0 auto;">
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:1.5rem;">
+      <i class="fas fa-list-check text-sky"></i> Detailed Feedback
+    </h2>
+
+    {% for resp in responses %}
+    <div class="response-card">
+      <div class="resp-header">
+        <div>
+          <div class="resp-qnum">
+            Question {{ resp.question_number }}
+            {% if session.part == 'full' %}
+              &nbsp;·&nbsp;
+              {% if resp.question_number <= 3 %}Part 1.1
+              {% elif resp.question_number <= 6 %}Part 1.2
+              {% elif resp.question_number == 7 %}Part 2
+              {% else %}Part 3{% endif %}
+            {% endif %}
+          </div>
+          <div class="resp-question">{{ resp.question_text|default:"—" }}</div>
+        </div>
+        <div class="score-chip {% if resp.score %}{% if resp.score >= 4 %}chip-high{% elif resp.score >= 3 %}chip-mid{% else %}chip-low{% endif %}{% else %}chip-none{% endif %}">
+          {% if resp.score %}{{ resp.score|floatformat:1 }}{% else %}—{% endif %}
+        </div>
+      </div>
+
+      {% if resp.transcription %}
+      <div class="transcript-box">
+        <i class="fas fa-quote-left" style="font-size:.7rem;opacity:.4;margin-right:.3rem"></i>
+        {{ resp.transcription }}
+      </div>
+      {% endif %}
+
+      {% if resp.feedback %}
+      <div class="feedback-box">
+        <i class="fas fa-lightbulb"></i>{{ resp.feedback }}
+      </div>
+      {% endif %}
+
+      {% if resp.score_breakdown %}
+      <div class="mini-bars">
+        {% if resp.score_breakdown.grammar is not None %}
+        <div class="mini-bar-item">Grammar: <strong>{{ resp.score_breakdown.grammar|floatformat:0 }}/5</strong></div>
+        {% endif %}
+        {% if resp.score_breakdown.vocabulary is not None %}
+        <div class="mini-bar-item">Vocab: <strong>{{ resp.score_breakdown.vocabulary|floatformat:0 }}/5</strong></div>
+        {% endif %}
+        {% if resp.score_breakdown.pronunciation is not None %}
+        <div class="mini-bar-item">Pron: <strong>{{ resp.score_breakdown.pronunciation|floatformat:0 }}/5</strong></div>
+        {% endif %}
+        {% if resp.score_breakdown.fluency is not None %}
+        <div class="mini-bar-item">Fluency: <strong>{{ resp.score_breakdown.fluency|floatformat:0 }}/5</strong></div>
+        {% endif %}
+        {% if resp.score_breakdown.coherence is not None %}
+        <div class="mini-bar-item">Coherence: <strong>{{ resp.score_breakdown.coherence|floatformat:0 }}/5</strong></div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if resp.audio_file %}
+      <div style="margin-top:.8rem;">
+        <audio controls style="width:100%;height:34px;opacity:.7">
+          <source src="{{ resp.audio_file.url }}" type="audio/webm">
+        </audio>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="card text-center text-muted">No responses recorded.</div>
+    {% endfor %}
+  </div>
+
+  <div class="results-actions">
+    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
+      <i class="fas fa-th-large"></i> Back to Dashboard
+    </a>
+    <a href="{% url 'test_select' %}" class="btn btn-secondary btn-lg">
+      <i class="fas fa-redo"></i> Take Another Test
+    </a>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.bd-bar-fill[data-val]').forEach(el => {
+    requestAnimationFrame(() => {
+      el.style.width = (parseFloat(el.dataset.val) / 5 * 100) + '%';
+    });
+  });
+});
+</script>
+{% endblock %}
